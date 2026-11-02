@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDown, ArrowRight, Filter, HardDrive, ListChecks, Save, Search } from 'lucide-react';
+import { ArrowDown, ArrowRight, Filter, HardDrive, ListChecks, Pause, Play, Save, Search } from 'lucide-react';
 import { usePageMeta, assetUrl } from '@/lib/meta';
 import { useAsync } from '@/hooks/use-async';
 import { getProducts } from '@/services/products';
@@ -9,6 +10,8 @@ import { ProductCard, ProductCardSkeleton } from '@/components/nx/ProductCard';
 import { CategoryCard } from '@/components/nx/CategoryCard';
 import { ErrorPanel } from '@/components/nx/feedback';
 import { LogoMark } from '@/components/layout/Logo';
+import { HeroBackdrop } from '@/components/nx/HeroBackdrop';
+import { useReveal } from '@/hooks/use-reveal';
 
 const SsdArt = (
   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -44,11 +47,15 @@ const FEATURED_CATS = [
 ] as const;
 
 function Hero() {
+  const [paused, setPaused] = useState(false);
   return (
-    <section aria-labelledby="hero-title" className="relative isolate overflow-hidden border-b border-line">
-      <img src={assetUrl('hero-abstract.jpg')} alt="" width={1536} height={1024} className="absolute inset-0 -z-10 h-full w-full object-cover opacity-70" fetchPriority="high" />
+    <section aria-labelledby="hero-title" className={`hero-motion relative isolate overflow-hidden border-b border-line${paused ? ' is-paused' : ''}`}>
+      <img src={assetUrl('hero-abstract.jpg')} alt="" width={1536} height={1024} className="hero-pan absolute inset-0 -z-10 h-full w-full object-cover opacity-40" fetchPriority="high" />
+      <HeroBackdrop paused={paused} />
+      <div aria-hidden className="hero-aurora pointer-events-none absolute -z-10" />
       <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,var(--color-ink)_15%,rgb(8_8_23/0.75)_55%,rgb(8_8_23/0.2))]" />
-      <div aria-hidden className="grid-bg absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_30%_50%,black,transparent_70%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(0deg,var(--color-ink),transparent_30%)]" />
+      <div aria-hidden className="grid-bg pointer-events-none absolute inset-0 -z-10 opacity-50 [mask-image:radial-gradient(ellipse_at_30%_50%,black,transparent_70%)]" />
       <div className="container-nexa grid min-h-[min(88dvh,820px)] items-center gap-10 py-16 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="flex flex-col gap-6">
           <div className="rise flex items-center gap-3">
@@ -93,15 +100,25 @@ function Hero() {
                 </linearGradient>
               </defs>
               <polygon points="200,20 356,110 356,290 200,380 44,290 44,110" fill="rgb(16 16 42 / 0.6)" stroke="url(#hx)" strokeWidth="2" />
-              <polygon points="200,70 312,135 312,265 200,330 88,265 88,135" fill="none" stroke="#2c2c5c" strokeWidth="1.5" />
+              <g className="hex-spin"><polygon points="200,70 312,135 312,265 200,330 88,265 88,135" fill="none" stroke="#2c2c5c" strokeWidth="1.5" strokeDasharray="6 10" /></g>
               <path d="M150 260V140l100 120V140" fill="none" stroke="#F7F8FF" strokeWidth="14" strokeLinecap="square" />
               {[0, 1, 2, 3, 4, 5].map((i) => (
-                <circle key={i} cx={200 + 156 * Math.cos((Math.PI / 3) * i - Math.PI / 2)} cy={200 + 180 * Math.sin((Math.PI / 3) * i - Math.PI / 2) * 0.5 + 0} r="4" fill="#00DDF2" />
+                <circle key={i} cx={200 + 156 * Math.cos((Math.PI / 3) * i - Math.PI / 2)} cy={200 + 180 * Math.sin((Math.PI / 3) * i - Math.PI / 2) * 0.5 + 0} r="4" fill="#00DDF2" className="node-pulse" style={{ animationDelay: `${i * 0.4}s` }} />
               ))}
             </svg>
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => setPaused((p) => !p)}
+        aria-pressed={paused}
+        className="motion-toggle absolute bottom-4 right-4 z-10 inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-control)] border border-line-strong bg-ink/70 px-4 font-display text-xs font-semibold uppercase tracking-[0.14em] text-text backdrop-blur transition-colors hover:border-cyan hover:text-cyan"
+        data-testid="button-toggle-motion"
+      >
+        {paused ? <Play aria-hidden className="h-4 w-4" /> : <Pause aria-hidden className="h-4 w-4" />}
+        {paused ? 'Resume animations' : 'Pause animations'}
+      </button>
       <div className="relative h-px overflow-hidden bg-line">
         <div className="scan absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-cyan to-transparent" />
       </div>
@@ -115,7 +132,7 @@ function Categories() {
       <div className="container-nexa">
         <p className="eyebrow">Start with a category</p>
         <h2 id="cat-title" tabIndex={-1} className="mt-2 focus:outline-none">Core of the build</h2>
-        <ul className="mt-10 grid gap-6 md:grid-cols-3">
+        <ul data-reveal className="reveal-stagger mt-10 grid gap-6 md:grid-cols-3">
           {FEATURED_CATS.map((fc, i) => {
             const c = CATEGORIES.find((x) => x.slug === fc.slug)!;
             return (
@@ -147,7 +164,7 @@ function Monitors() {
           </Link>
         </div>
         {status === 'error' && <div className="mt-8"><ErrorPanel body="Monitors could not be loaded." onRetry={retry} /></div>}
-        <ul className="mt-10 grid gap-6 lg:grid-cols-3">
+        <ul data-reveal className="reveal-stagger mt-10 grid gap-6 lg:grid-cols-3">
           {status === 'loading' && !data
             ? [0, 1, 2].map((i) => <li key={i}><div className="skeleton h-[420px]" /></li>)
             : monitors.map((m) => (
@@ -170,7 +187,7 @@ function Featured() {
         {status === 'error' ? (
           <div className="mt-8"><ErrorPanel body="Featured products could not be loaded." onRetry={retry} /></div>
         ) : (
-          <ul className="mt-10 grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-4" aria-busy={status === 'loading'}>
+          <ul data-reveal className="reveal-stagger mt-10 grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-4" aria-busy={status === 'loading'}>
             {status === 'loading' && !data
               ? [0, 1, 2, 3].map((i) => <li key={i}><ProductCardSkeleton /></li>)
               : items.map((p) => <li key={p.id}><ProductCard product={p} /></li>)}
@@ -184,8 +201,8 @@ function Featured() {
 function Promo() {
   return (
     <section aria-labelledby="promo-title" className="container-nexa">
-      <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2 p-8 md:p-12">
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(120deg,rgb(0_221_242/0.18),transparent_45%,rgb(160_32_240/0.35))]" />
+      <div data-reveal className="relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2 p-8 md:p-12">
+        <div aria-hidden className="promo-flow absolute inset-0 bg-[linear-gradient(120deg,rgb(0_221_242/0.18),transparent_45%,rgb(160_32_240/0.35))]" />
         <div aria-hidden className="grid-bg absolute inset-0 opacity-60" />
         <div className="relative flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
           <div>
@@ -215,10 +232,10 @@ function Benefits() {
           <h2 id="ben-title" className="mt-2">Built for people who read the spec sheet</h2>
           <HardDrive aria-hidden className="mt-8 hidden h-24 w-24 text-purple/70 lg:block" strokeWidth={1} />
         </div>
-        <ul className="grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2">
+        <ul data-reveal className="reveal-stagger grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2">
           {BENEFITS.map((b) => (
-            <li key={b.title} className="flex flex-col gap-3 bg-surface p-6">
-              <b.icon aria-hidden className="h-7 w-7 text-cyan" />
+            <li key={b.title} className="benefit group flex flex-col gap-3 bg-surface p-6 transition-colors duration-200 hover:bg-surface-2">
+              <b.icon aria-hidden className="h-7 w-7 text-cyan transition-transform duration-200 ease-[var(--ease-nexa)] group-hover:-translate-y-0.5 group-hover:scale-110" />
               <h3>{b.title}</h3>
               <p className="text-muted">{b.body}</p>
             </li>
@@ -230,6 +247,7 @@ function Benefits() {
 }
 
 export default function Home() {
+  useReveal();
   usePageMeta('', 'NexaPC: PC components, gaming monitors, SSDs, cooling and graphics cards for gamers and builders in Kuwait.');
   return (
     <>

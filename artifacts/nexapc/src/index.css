@@ -148,7 +148,34 @@
 .skeleton { position: relative; overflow: hidden; background: var(--color-surface-2); border-radius: 8px; }
 .skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent); animation: shimmer 1.4s infinite; }
 
+/* ---------- Motion enhancements ---------- */
+@keyframes hero-pan { 0%,100% { transform: scale(1.08) translate3d(0,0,0); } 50% { transform: scale(1.14) translate3d(-2%,1.5%,0); } }
+@keyframes aurora { 0% { transform: translate3d(-10%,0,0) rotate(0deg); } 50% { transform: translate3d(8%,-6%,0) rotate(12deg); } 100% { transform: translate3d(-10%,0,0) rotate(0deg); } }
+@keyframes hex-spin { to { transform: rotate(360deg); } }
+@keyframes node-pulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+@keyframes promo-flow { 0%,100% { transform: translateX(-6%); } 50% { transform: translateX(6%); } }
+.hero-pan { animation: hero-pan 28s ease-in-out infinite; will-change: transform; }
+.hero-aurora { inset: -20% -10% auto auto; width: 70%; height: 90%; border-radius: 50%; opacity: 0.5; filter: blur(70px);
+  background: radial-gradient(closest-side, rgb(160 32 240 / 0.55), transparent), radial-gradient(closest-side at 30% 70%, rgb(0 221 242 / 0.35), transparent);
+  animation: aurora 22s ease-in-out infinite; }
+.hex-spin { transform-origin: 200px 200px; transform-box: view-box; animation: hex-spin 40s linear infinite; }
+.node-pulse { animation: node-pulse 2.6s ease-in-out infinite; }
+.promo-flow { inset: 0 -10%; animation: promo-flow 4s ease-in-out both; }
+.hero-motion.is-paused .hero-pan, .hero-motion.is-paused .hero-aurora, .hero-motion.is-paused .hex-spin,
+.hero-motion.is-paused .node-pulse, .hero-motion.is-paused .drift, .hero-motion.is-paused .scan { animation-play-state: paused; }
+
+/* Scroll reveal: only hides content once JS has opted in */
+.reveal-ready [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(24px); }
+.reveal-ready [data-reveal] { transition: opacity 700ms var(--ease-nexa), transform 700ms var(--ease-nexa); }
+.reveal-ready .reveal-stagger:not(.is-in) > * { opacity: 0; transform: translateY(18px); }
+.reveal-ready .reveal-stagger > * { transition: opacity 600ms var(--ease-nexa), transform 600ms var(--ease-nexa); }
+.reveal-ready .reveal-stagger:not(.is-in) { transform: none; opacity: 1; }
+.reveal-stagger > *:nth-child(2) { transition-delay: 80ms; }
+.reveal-stagger > *:nth-child(3) { transition-delay: 160ms; }
+.reveal-stagger > *:nth-child(4) { transition-delay: 240ms; }
+
 @media (prefers-reduced-motion: reduce) {
+  .reveal-ready [data-reveal], .reveal-ready .reveal-stagger > * { opacity: 1 !important; transform: none !important; }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
