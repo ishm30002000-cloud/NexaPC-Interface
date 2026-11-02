@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "NexaPC"
+description = "Front-end-only PC hardware storefront with searchable catalog, device-local cart, and honest account and checkout previews. Prices use Kuwaiti Dinar."
+version = "1.0.0"
+id = "artifacts/nexapc"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23891
+
+[services.development]
+run = "pnpm --filter @workspace/nexapc run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nexapc", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nexapc/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23891"
+BASE_PATH = "/"
