@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLocale } from '@/lib/i18n';
 
 export function LogoMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
@@ -16,8 +17,9 @@ export function LogoMark({ className = 'h-9 w-9' }: { className?: string }) {
 }
 
 export function Logo() {
+  const { t } = useLocale();
   return (
-    <Link to="/" className="flex min-h-[44px] items-center gap-2.5" aria-label="NexaPC home" data-testid="link-logo">
+    <Link to="/" className="flex min-h-[44px] items-center gap-2.5" aria-label={t('NexaPC home')} data-testid="link-logo">
       <LogoMark />
       <span className="font-display text-2xl font-bold tracking-wide">
         NEXA<span className="text-cyan">PC</span>

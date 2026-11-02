@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { Breadcrumb, type Crumb } from '@/components/layout/Breadcrumb';
 import { LogoMark } from '@/components/layout/Logo';
+import { useLocale } from '@/lib/i18n';
 
 /** Shared two-panel shell for Login, Sign Up and Forgot Password. */
 export function AuthShell({ crumbs, title, intro, children, aside }: { crumbs: Crumb[]; title: string; intro: string; children: ReactNode; aside?: ReactNode }) {
+  const { t } = useLocale();
   return (
     <div className="container-nexa py-8">
       <Breadcrumb items={crumbs} />
@@ -15,7 +17,7 @@ export function AuthShell({ crumbs, title, intro, children, aside }: { crumbs: C
           <div className="relative">
             {aside ?? (
               <p className="font-display text-4xl font-bold leading-tight">
-                Your setup.<br /><span className="text-cyan">Your list.</span>
+                {t('Your setup.')}<br /><span className="text-cyan">{t('Your list.')}</span>
               </p>
             )}
           </div>

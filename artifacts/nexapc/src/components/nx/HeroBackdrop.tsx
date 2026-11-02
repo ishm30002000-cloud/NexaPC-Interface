@@ -3,12 +3,10 @@ import { useEffect, useRef } from 'react';
 /**
  * Procedural "video-like" hero background: a perspective data-grid flowing toward
  * the viewer, drifting depth particles, and energy streaks along circuit lanes.
- * Decorative only. Stops when paused, offscreen, or tab hidden.
+ * Decorative only. Runs continuously unless motion is reduced, the page is offscreen, or the tab is hidden.
  */
-export function HeroBackdrop({ paused }: { paused: boolean }) {
+export function HeroBackdrop() {
   const ref = useRef<HTMLCanvasElement>(null);
-  const pausedRef = useRef(paused);
-  pausedRef.current = paused;
   const kick = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -114,7 +112,7 @@ export function HeroBackdrop({ paused }: { paused: boolean }) {
       schedule();
     };
     const schedule = () => {
-      if (raf || reduce || pausedRef.current || !visible || document.hidden) { last = 0; return; }
+      if (raf || reduce || !visible || document.hidden) { last = 0; return; }
       raf = requestAnimationFrame(frame);
     };
     kick.current = () => { if (!raf) { last = 0; draw(); schedule(); } };
@@ -145,7 +143,7 @@ export function HeroBackdrop({ paused }: { paused: boolean }) {
     };
   }, []);
 
-  useEffect(() => { kick.current(); }, [paused]);
+  useEffect(() => { kick.current(); }, []);
 
   return <canvas ref={ref} aria-hidden className="pointer-events-none absolute inset-0 -z-10 h-full w-full" />;
 }

@@ -1,18 +1,20 @@
 import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { AlertCircle, Check, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 const inputBase =
   'block w-full min-h-[48px] rounded-[var(--radius-control)] border bg-ink/60 px-4 text-base text-text placeholder:text-muted/70 transition-colors duration-150 hover:border-line-strong focus-visible:border-cyan focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-cyan aria-[invalid=true]:border-danger';
 
 function FieldShell({ id, label, required, hint, error, children }: { id: string; label: string; required?: boolean; hint?: string; error?: string; children: ReactNode }) {
+  const { t } = useLocale();
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className="text-[0.95rem] font-medium text-text">
         {label}
-        {required ? <span className="ml-1 text-muted">(required)</span> : <span className="ml-1 text-muted">(optional)</span>}
+        {required ? <span className="ml-1 text-muted">{t('(required)')}</span> : <span className="ml-1 text-muted">{t('(optional)')}</span>}
       </label>
-      {hint && <p id={`${id}-hint`} className="text-sm text-muted">{hint}</p>}
+        {hint && <p id={`${id}-hint`} className="text-sm text-muted">{t(hint)}</p>}
       {children}
       {error && (
         <p id={`${id}-error`} className="flex items-start gap-1.5 text-sm font-medium text-danger">
@@ -71,6 +73,7 @@ export const PasswordField = forwardRef<HTMLInputElement, TextFieldProps & { des
   { label, hint, error, id, required, describedExtra, ...rest },
   ref,
 ) {
+  const { t } = useLocale();
   const auto = useId();
   const fid = id ?? auto;
   const [shown, setShown] = useState(false);
@@ -91,7 +94,7 @@ export const PasswordField = forwardRef<HTMLInputElement, TextFieldProps & { des
           type="button"
           onClick={() => setShown((s) => !s)}
           aria-pressed={shown}
-          aria-label={shown ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-label={shown ? `${t('Hide')} ${label.toLowerCase()}` : `${t('Show')} ${label.toLowerCase()}`}
           aria-controls={fid}
           className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-lg text-muted hover:text-cyan"
           data-testid={`button-toggle-${fid}`}
@@ -179,6 +182,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
 
 /** Error summary — receives focus after a failed submit. */
 export function ErrorSummary({ errors, focusKey }: { errors: { field: string; message: string }[]; focusKey: number }) {
+  const { t } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focusKey > 0 && errors.length) ref.current?.focus();
@@ -188,7 +192,7 @@ export function ErrorSummary({ errors, focusKey }: { errors: { field: string; me
   return (
     <div ref={ref} tabIndex={-1} role="alert" aria-labelledby="error-summary-title" className="rounded-[var(--radius-card)] border-2 border-danger bg-danger/10 p-4" data-testid="error-summary">
       <h2 id="error-summary-title" className="flex items-center gap-2 font-display text-lg font-semibold text-danger">
-        <AlertCircle aria-hidden className="h-5 w-5" /> There {errors.length === 1 ? 'is 1 problem' : `are ${errors.length} problems`} with this form
+        <AlertCircle aria-hidden className="h-5 w-5" /> {t(errors.length === 1 ? 'There is 1 problem with this form' : 'There are problems with this form')}
       </h2>
       <ul className="mt-2 list-disc space-y-1 pl-6">
         {errors.map((e) => (
@@ -201,7 +205,7 @@ export function ErrorSummary({ errors, focusKey }: { errors: { field: string; me
                 document.getElementById(e.field)?.focus();
               }}
             >
-              {e.message}
+              {t(e.message)}
             </a>
           </li>
         ))}

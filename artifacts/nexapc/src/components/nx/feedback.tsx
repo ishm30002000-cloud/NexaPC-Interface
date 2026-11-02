@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, Clock, Info, RotateCw, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 import type { Availability } from '@/lib/catalog';
 import { Button } from './Button';
 
@@ -21,15 +22,16 @@ export function EmptyState({ title, body, icon, action, headingLevel = 2 }: { ti
 }
 
 export function ErrorPanel({ title = 'Something went wrong', body, onRetry }: { title?: string; body?: string; onRetry?: () => void }) {
+  const { t } = useLocale();
   return (
     <div role="alert" className="panel flex flex-col items-start gap-3 border-danger/60 p-6" data-testid="error-panel">
       <h2 className="flex items-center gap-2 text-xl text-danger">
-        <AlertTriangle aria-hidden className="h-5 w-5" /> {title}
+        <AlertTriangle aria-hidden className="h-5 w-5" /> {t(title)}
       </h2>
-      {body && <p className="text-muted">{body}</p>}
+      {body && <p className="text-muted">{t(body)}</p>}
       {onRetry && (
         <Button variant="secondary" onClick={onRetry} icon={<RotateCw aria-hidden className="h-4 w-4" />} data-testid="button-retry">
-          Retry
+          {t('Retry')}
         </Button>
       )}
     </div>
@@ -43,12 +45,13 @@ const AVAIL = {
 } as const;
 
 export function AvailabilityBadge({ value, className }: { value: Availability; className?: string }) {
+  const { t } = useLocale();
   const a = AVAIL[value];
   const Icon = a.icon;
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border bg-ink/70 px-2.5 py-1 text-xs font-semibold', a.cls, className)} data-testid="badge-availability">
       <Icon aria-hidden className="h-3.5 w-3.5" />
-      {a.label}
+      {t(a.label)}
     </span>
   );
 }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -25,7 +25,7 @@
   --color-warn: #ffc857;
 
   --font-display: 'Chakra Petch', 'Rajdhani', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-body: 'DM Sans', 'Noto Sans Arabic', system-ui, sans-serif;
 
   --radius-card: 14px;
   --radius-control: 10px;
@@ -161,8 +161,6 @@
 .hex-spin { transform-origin: 200px 200px; transform-box: view-box; animation: hex-spin 40s linear infinite; }
 .node-pulse { animation: node-pulse 2.6s ease-in-out infinite; }
 .promo-flow { inset: 0 -10%; animation: promo-flow 4s ease-in-out both; }
-.hero-motion.is-paused .hero-pan, .hero-motion.is-paused .hero-aurora, .hero-motion.is-paused .hex-spin,
-.hero-motion.is-paused .node-pulse, .hero-motion.is-paused .drift, .hero-motion.is-paused .scan { animation-play-state: paused; }
 
 /* Scroll reveal: only hides content once JS has opted in */
 .reveal-ready [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(24px); }

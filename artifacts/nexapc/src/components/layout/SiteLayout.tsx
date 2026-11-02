@@ -7,19 +7,22 @@ import { Notice } from '@/components/nx/feedback';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { LogoMark } from './Logo';
+import { useLocale } from '@/lib/i18n';
 
 function SkipLink() {
+  const { t } = useLocale();
   return (
     <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:rounded-lg focus:bg-cyan focus:px-4 focus:py-3 focus:font-semibold focus:text-ink" style={{ zIndex: 'var(--z-toast)' }} data-testid="link-skip">
-      Skip to main content
+      {t('Skip to main content')}
     </a>
   );
 }
 
 function RouteFallback() {
+  const { t } = useLocale();
   return (
     <div className="container-nexa py-16" role="status" aria-live="polite">
-      <span className="sr-only">Loading page</span>
+      <span className="sr-only">{t('Loading page')}</span>
       <div className="skeleton h-10 w-2/3 max-w-lg" />
       <div className="mt-4 skeleton h-5 w-1/2 max-w-md" />
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -39,15 +42,16 @@ function useScrollTopOnRoute() {
 }
 
 function CartRecoveredNotice() {
+  const { t, locale } = useLocale();
   const { recovered, dismissRecovered, storageFailed } = useCart();
   if (!recovered && !storageFailed) return null;
   return (
     <div className="container-nexa pt-4">
-      <Notice tone="warn" title={recovered ? 'Your saved cart could not be read' : 'Cart cannot be saved on this device'}>
-        {recovered ? 'The stored cart data was damaged, so it has been reset. ' : 'Browser storage is unavailable; your cart will clear when you leave. '}
+      <Notice tone="warn" title={t(recovered ? 'Your saved cart could not be read' : 'Cart cannot be saved on this device')}>
+        {t(recovered ? 'The stored cart data was damaged, so it has been reset. ' : 'Browser storage is unavailable; your cart will clear when you leave. ')}
         {recovered && (
           <button type="button" onClick={dismissRecovered} className="min-h-[44px] font-semibold text-cyan underline underline-offset-4">
-            Dismiss
+            {t('Dismiss')}
           </button>
         )}
       </Notice>
@@ -78,18 +82,21 @@ export function SiteLayout() {
 /** Simplified checkout shell: same logo, tokens and styles. */
 export function CheckoutLayout() {
   useScrollTopOnRoute();
+  const { t } = useLocale();
   return (
     <div className="noise flex min-h-[100dvh] flex-col">
       <SkipLink />
       <header className="border-b border-line bg-ink/90">
         <div className="container-nexa flex h-[var(--header-h)] items-center justify-between gap-4">
-          <Link to="/" className="flex min-h-[44px] items-center gap-2.5" aria-label="NexaPC home">
+          <Link to="/" className="flex min-h-[44px] items-center gap-2.5" aria-label={t('NexaPC home')}>
             <LogoMark />
             <span className="font-display text-2xl font-bold">NEXA<span className="text-cyan">PC</span></span>
           </Link>
-          <Link to="/cart" className="inline-flex min-h-[44px] items-center gap-2 text-muted hover:text-cyan">
-            <Lock aria-hidden className="h-4 w-4" /> Back to cart
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/cart" className="inline-flex min-h-[44px] items-center gap-2 text-muted hover:text-cyan">
+              <Lock aria-hidden className="h-4 w-4" /> {t('Back to cart')}
+            </Link>
+          </div>
         </div>
         <div className="glow-line opacity-60" />
       </header>

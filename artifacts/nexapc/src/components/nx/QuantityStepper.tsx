@@ -1,16 +1,18 @@
 import { useId } from 'react';
 import { Minus, Plus } from 'lucide-react';
+import { useLocale } from '@/lib/i18n';
 
 export function QuantityStepper({ value, max, onChange, label = 'Quantity', describedBy }: { value: number; max: number; onChange: (n: number) => void; label?: string; describedBy?: string }) {
+  const { t } = useLocale();
   const id = useId();
   const btn = 'grid h-11 w-11 place-items-center rounded-[calc(var(--radius-control)-2px)] text-text transition-colors duration-150 hover:bg-surface-2 hover:text-cyan disabled:opacity-40';
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={id} className="sr-only">
-        {label}
+        {t(label)}
       </label>
       <div className="inline-flex w-fit items-center rounded-[var(--radius-control)] border border-line-strong bg-ink/60 p-0.5">
-        <button type="button" className={btn} onClick={() => onChange(value - 1)} disabled={value <= 1} aria-label={`Decrease ${label.toLowerCase()}`} data-testid="button-qty-dec">
+        <button type="button" className={btn} onClick={() => onChange(value - 1)} disabled={value <= 1} aria-label={`${t('Decrease')} ${t(label).toLowerCase()}`} data-testid="button-qty-dec">
           <Minus aria-hidden className="h-4 w-4" />
         </button>
         <input
@@ -28,7 +30,7 @@ export function QuantityStepper({ value, max, onChange, label = 'Quantity', desc
           className="tabular h-11 w-14 bg-transparent text-center text-base font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
           data-testid="input-qty"
         />
-        <button type="button" className={btn} onClick={() => onChange(value + 1)} disabled={value >= max} aria-label={`Increase ${label.toLowerCase()}`} data-testid="button-qty-inc">
+        <button type="button" className={btn} onClick={() => onChange(value + 1)} disabled={value >= max} aria-label={`${t('Increase')} ${t(label).toLowerCase()}`} data-testid="button-qty-inc">
           <Plus aria-hidden className="h-4 w-4" />
         </button>
       </div>

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { Link } from 'react-router-dom';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 type Tone = 'success' | 'error' | 'info';
 interface ToastItem {
@@ -16,6 +17,7 @@ interface ToastItem {
 const Ctx = createContext<{ show: (t: Omit<ToastItem, 'id'>) => void } | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t: translate } = useLocale();
   const [items, setItems] = useState<ToastItem[]>([]);
   const seq = useRef(1);
   const dismiss = useCallback((id: number) => setItems((p) => p.filter((t) => t.id !== id)), []);
@@ -37,40 +39,40 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="no-print pointer-events-none fixed inset-x-0 bottom-0 flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6"
         style={{ zIndex: 'var(--z-toast)' }}
       >
-        {items.map((t) => {
-          const Icon = icons[t.tone];
+        {items.map((toast) => {
+          const Icon = icons[toast.tone];
           return (
             <div
-              key={t.id}
+              key={toast.id}
               className={cn(
                 'rise pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-[var(--radius-card)] border bg-surface-2 p-4 shadow-[var(--shadow-glow)]',
-                t.tone === 'error' ? 'border-danger' : t.tone === 'success' ? 'border-success/60' : 'border-cyan/50',
+                toast.tone === 'error' ? 'border-danger' : toast.tone === 'success' ? 'border-success/60' : 'border-cyan/50',
               )}
-              data-testid={`toast-${t.tone}`}
+              data-testid={`toast-${toast.tone}`}
             >
-              <Icon aria-hidden className={cn('mt-0.5 h-5 w-5 shrink-0', t.tone === 'error' ? 'text-danger' : t.tone === 'success' ? 'text-success' : 'text-cyan')} />
+              <Icon aria-hidden className={cn('mt-0.5 h-5 w-5 shrink-0', toast.tone === 'error' ? 'text-danger' : toast.tone === 'success' ? 'text-success' : 'text-cyan')} />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold">{t.title}</p>
-                {t.body && <p className="text-sm text-muted">{t.body}</p>}
+                <p className="font-semibold">{translate(toast.title)}</p>
+                {toast.body && <p className="text-sm text-muted">{translate(toast.body)}</p>}
                 <div className="mt-1 flex flex-wrap gap-4">
-                  {t.link && (
-                    <Link to={t.link.to} className="inline-flex min-h-[44px] items-center font-semibold text-cyan underline-offset-4 hover:underline" onClick={() => dismiss(t.id)}>
-                      {t.link.label}
+                  {toast.link && (
+                    <Link to={toast.link.to} className="inline-flex min-h-[44px] items-center font-semibold text-cyan underline-offset-4 hover:underline" onClick={() => dismiss(toast.id)}>
+                      {translate(toast.link.label)}
                     </Link>
                   )}
-                  {t.action && (
+                  {toast.action && (
                     <button
                       type="button"
                       className="inline-flex min-h-[44px] items-center font-semibold text-cyan underline-offset-4 hover:underline"
-                      onClick={() => { t.action!.onClick(); dismiss(t.id); }}
+                      onClick={() => { toast.action!.onClick(); dismiss(toast.id); }}
                       data-testid="button-toast-action"
                     >
-                      {t.action.label}
+                      {translate(toast.action.label)}
                     </button>
                   )}
                 </div>
               </div>
-              <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss notification" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:text-text">
+              <button type="button" onClick={() => dismiss(toast.id)} aria-label={translate('Dismiss notification')} className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:text-text">
                 <X aria-hidden className="h-4 w-4" />
               </button>
             </div>

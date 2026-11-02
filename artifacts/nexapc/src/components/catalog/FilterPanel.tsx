@@ -6,6 +6,7 @@ import { kwdToFils } from '@/lib/money';
 import { priceRangeSchema } from '@/lib/schemas';
 import { Button } from '@/components/nx/Button';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 function toggle<T>(arr: T[], v: T) {
   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
@@ -40,6 +41,7 @@ function filsToInput(f: number | null) {
 }
 
 function PriceRange({ min, max, onApply, idp }: { min: number | null; max: number | null; onApply: (min: number | null, max: number | null) => void; idp: string }) {
+  const { t } = useLocale();
   const [a, setA] = useState(filsToInput(min));
   const [b, setB] = useState(filsToInput(max));
   const [err, setErr] = useState<string | null>(null);
@@ -49,7 +51,7 @@ function PriceRange({ min, max, onApply, idp }: { min: number | null; max: numbe
     const minF = a.trim() ? kwdToFils(a) : null;
     const maxF = b.trim() ? kwdToFils(b) : null;
     if ((a.trim() && minF == null) || (b.trim() && maxF == null)) {
-      setErr('Enter amounts in KWD with up to 3 decimals, for example 25.500');
+      setErr(t('Enter amounts in KWD with up to 3 decimals, for example 25.500'));
       return;
     }
     const r = priceRangeSchema.safeParse({ min: minF, max: maxF });
@@ -60,9 +62,9 @@ function PriceRange({ min, max, onApply, idp }: { min: number | null; max: numbe
   const errId = `${idp}-price-err`;
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-3">
-      <p className="text-sm text-muted">Products without a price yet are hidden while a price range is set.</p>
+      <p className="text-sm text-muted">{t('Products without a price yet are hidden while a price range is set.')}</p>
       <div className="grid grid-cols-2 gap-3">
-        {[{ k: 'min', l: 'Min (KWD)', v: a, s: setA }, { k: 'max', l: 'Max (KWD)', v: b, s: setB }].map((f) => (
+        {[{ k: 'min', l: t('Min (KWD)'), v: a, s: setA }, { k: 'max', l: t('Max (KWD)'), v: b, s: setB }].map((f) => (
           <div key={f.k} className="flex flex-col gap-1">
             <label htmlFor={`${idp}-${f.k}`} className="text-sm">{f.l}</label>
             <input
@@ -83,7 +85,7 @@ function PriceRange({ min, max, onApply, idp }: { min: number | null; max: numbe
           <AlertCircle aria-hidden className="mt-0.5 h-4 w-4 shrink-0" /> {err}
         </p>
       )}
-      <Button type="submit" variant="secondary" data-testid="button-apply-price">Apply price</Button>
+      <Button type="submit" variant="secondary" data-testid="button-apply-price">{t('Apply price')}</Button>
     </form>
   );
 }
@@ -95,31 +97,32 @@ export function FilterPanel({ value, onChange, categories, brands, counts }: {
   brands: string[];
   counts?: { category: Record<string, number>; brand: Record<string, number> };
 }) {
+  const { t } = useLocale();
   const idp = useId().replace(/:/g, '');
   return (
     <div className={cn('flex flex-col gap-5')}>
-      <Group title="Category">
+      <Group title={t('Category')}>
         <ul>
           {categories.map((c) => (
             <CheckRow key={c.slug} id={`${idp}-cat-${c.slug}`} label={c.name} count={counts?.category[c.slug]} checked={value.categories.includes(c.slug)} onChange={() => onChange({ ...value, categories: toggle(value.categories, c.slug) })} />
           ))}
         </ul>
       </Group>
-      <Group title="Brand">
+      <Group title={t('Brand')}>
         <ul>
           {brands.map((b) => (
             <CheckRow key={b} id={`${idp}-brand-${b.replace(/\s/g, '-')}`} label={b} count={counts?.brand[b]} checked={value.brands.includes(b)} onChange={() => onChange({ ...value, brands: toggle(value.brands, b) })} />
           ))}
         </ul>
       </Group>
-      <Group title="Availability">
+      <Group title={t('Availability')}>
         <ul>
           {AVAILABILITY_OPTIONS.map((a) => (
-            <CheckRow key={a.value} id={`${idp}-av-${a.value}`} label={a.label} checked={value.availability.includes(a.value)} onChange={() => onChange({ ...value, availability: toggle<Availability>(value.availability, a.value) })} />
+            <CheckRow key={a.value} id={`${idp}-av-${a.value}`} label={t(a.label)} checked={value.availability.includes(a.value)} onChange={() => onChange({ ...value, availability: toggle<Availability>(value.availability, a.value) })} />
           ))}
         </ul>
       </Group>
-      <Group title="Price range">
+      <Group title={t('Price range')}>
         <PriceRange idp={idp} min={value.minFils} max={value.maxFils} onApply={(minFils, maxFils) => onChange({ ...value, minFils, maxFils })} />
       </Group>
     </div>

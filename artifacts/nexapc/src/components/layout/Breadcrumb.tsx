@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLocale } from '@/lib/i18n';
 import { ChevronRight } from 'lucide-react';
 
 export interface Crumb {
@@ -7,8 +8,9 @@ export interface Crumb {
 }
 
 export function Breadcrumb({ items }: { items: Crumb[] }) {
+  const { t } = useLocale();
   return (
-    <nav aria-label="Breadcrumb" className="no-print">
+    <nav aria-label={t('Breadcrumb')} className="no-print">
       <ol className="flex flex-wrap items-center gap-1 text-sm text-muted">
         {items.map((c, i) => {
           const last = i === items.length - 1;

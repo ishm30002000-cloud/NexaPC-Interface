@@ -2,6 +2,7 @@ import * as RD from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 interface BaseProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface BaseProps {
 
 /** Accessible modal dialog (focus trap, Escape, focus return via Radix). */
 export function Dialog({ open, onOpenChange, title, description, children, footer }: BaseProps) {
+  const { t } = useLocale();
   return (
     <RD.Root open={open} onOpenChange={onOpenChange}>
       <RD.Portal>
@@ -29,7 +31,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
               <RD.Title className="font-display text-2xl font-semibold">{title}</RD.Title>
               {description ? <RD.Description className="mt-1 text-muted">{description}</RD.Description> : <RD.Description className="sr-only">{title}</RD.Description>}
             </div>
-            <RD.Close aria-label="Close dialog" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-text">
+            <RD.Close aria-label={t('Close dialog')} className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-text">
               <X aria-hidden className="h-5 w-5" />
             </RD.Close>
           </div>
@@ -42,7 +44,9 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
 }
 
 /** Slide-in panel (filters, mobile nav). */
-export function Drawer({ open, onOpenChange, title, description, children, footer, side = 'right', id }: BaseProps & { side?: 'left' | 'right'; id?: string }) {
+export function Drawer({ open, onOpenChange, title, description, children, footer, side, id }: BaseProps & { side?: 'left' | 'right'; id?: string }) {
+  const { t, locale } = useLocale();
+  const drawerSide = side ?? 'right';
   return (
     <RD.Root open={open} onOpenChange={onOpenChange}>
       <RD.Portal>
@@ -51,7 +55,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
           id={id}
           className={cn(
             'fixed inset-y-0 flex h-[100dvh] w-[min(420px,100vw)] flex-col border-line bg-surface shadow-[var(--shadow-glow)] data-[state=open]:animate-in data-[state=open]:duration-200',
-            side === 'right' ? 'right-0 border-l data-[state=open]:slide-in-from-right' : 'left-0 border-r data-[state=open]:slide-in-from-left',
+            drawerSide === 'right' ? 'right-0 border-l data-[state=open]:slide-in-from-right' : 'left-0 border-r data-[state=open]:slide-in-from-left',
           )}
           style={{ zIndex: 'var(--z-overlay)' }}
         >
@@ -60,7 +64,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
               <RD.Title className="font-display text-xl font-semibold">{title}</RD.Title>
               {description ? <RD.Description className="text-sm text-muted">{description}</RD.Description> : <RD.Description className="sr-only">{title}</RD.Description>}
             </div>
-            <RD.Close aria-label={`Close ${title.toLowerCase()}`} className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-text">
+            <RD.Close aria-label={`${t('Close')} ${t(title).toLowerCase()}`} className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-text">
               <X aria-hidden className="h-5 w-5" />
             </RD.Close>
           </div>

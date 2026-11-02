@@ -2,6 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Link, type LinkProps } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'md' | 'lg' | 'icon';
@@ -32,6 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   { variant = 'primary', size = 'md', loading, full, icon, className, children, disabled, type = 'button', ...rest },
   ref,
 ) {
+  const { t } = useLocale();
   return (
     <button
       ref={ref}
@@ -43,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     >
       {loading ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : icon}
       {children}
-      {loading && <span className="sr-only">Working</span>}
+      {loading && <span className="sr-only">{t('Working')}</span>}
     </button>
   );
 });

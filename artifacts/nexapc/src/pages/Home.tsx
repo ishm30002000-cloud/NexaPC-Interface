@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDown, ArrowRight, Filter, HardDrive, ListChecks, Pause, Play, Save, Search } from 'lucide-react';
+import { ArrowDown, ArrowRight, Filter, HardDrive, ListChecks, Save, Search } from 'lucide-react';
 import { usePageMeta, assetUrl } from '@/lib/meta';
 import { useAsync } from '@/hooks/use-async';
 import { getProducts } from '@/services/products';
@@ -12,6 +11,7 @@ import { ErrorPanel } from '@/components/nx/feedback';
 import { LogoMark } from '@/components/layout/Logo';
 import { HeroBackdrop } from '@/components/nx/HeroBackdrop';
 import { useReveal } from '@/hooks/use-reveal';
+import { useLocale, productCopy } from '@/lib/i18n';
 
 const SsdArt = (
   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -47,11 +47,11 @@ const FEATURED_CATS = [
 ] as const;
 
 function Hero() {
-  const [paused, setPaused] = useState(false);
+  const { t } = useLocale();
   return (
-    <section aria-labelledby="hero-title" className={`hero-motion relative isolate overflow-hidden border-b border-line${paused ? ' is-paused' : ''}`}>
+    <section aria-labelledby="hero-title" className="hero-motion relative isolate overflow-hidden border-b border-line">
       <img src={assetUrl('hero-abstract.jpg')} alt="" width={1536} height={1024} className="hero-pan absolute inset-0 -z-10 h-full w-full object-cover opacity-40" fetchPriority="high" />
-      <HeroBackdrop paused={paused} />
+      <HeroBackdrop />
       <div aria-hidden className="hero-aurora pointer-events-none absolute -z-10" />
       <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,var(--color-ink)_15%,rgb(8_8_23/0.75)_55%,rgb(8_8_23/0.2))]" />
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(0deg,var(--color-ink),transparent_30%)]" />
@@ -62,19 +62,19 @@ function Hero() {
             <LogoMark className="h-12 w-12" />
             <span className="font-display text-xl font-bold tracking-[0.3em]">NEXA<span className="text-cyan">PC</span></span>
             <span aria-hidden className="h-px w-16 bg-gradient-to-r from-cyan to-purple" />
-            <span className="eyebrow">Kuwait</span>
+            <span className="eyebrow">{t('Kuwait')}</span>
           </div>
           <h1 id="hero-title" className="rise text-[clamp(2.75rem,1.6rem+5.2vw,6rem)] leading-[0.95] [animation-delay:80ms]">
-            Build Your
+            {t('Build Your')}
             <br />
-            <span className="bg-gradient-to-r from-cyan via-cyan-soft to-purple bg-clip-text text-transparent">Ultimate Setup</span>
+            <span className="bg-gradient-to-r from-cyan via-cyan-soft to-purple bg-clip-text text-transparent">{t('Ultimate Setup')}</span>
           </h1>
           <p className="rise max-w-xl text-lg text-muted [animation-delay:160ms]">
-            Graphics cards, SSDs, cooling, processors and high refresh monitors from Samsung, SADES, MSI and more. Compare real specs, filter by what matters, and build with confidence.
+            {t('Graphics cards, SSDs, cooling, processors and high refresh monitors from Samsung, SADES, MSI and more. Compare real specs, filter by what matters, and build with confidence.')}
           </p>
           <div className="rise flex flex-wrap gap-3 [animation-delay:240ms]">
             <ButtonLink to="/products" size="lg" data-testid="link-shop-now">
-              Shop Now <ArrowRight aria-hidden className="h-5 w-5" />
+              {t('Shop Now')} <ArrowRight aria-hidden className="rtl-mirror h-5 w-5" />
             </ButtonLink>
             <Button
               variant="secondary"
@@ -86,7 +86,7 @@ function Hero() {
               }}
               data-testid="button-explore"
             >
-              Explore Products <ArrowDown aria-hidden className="h-5 w-5" />
+              {t('Explore Products')} <ArrowDown aria-hidden className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -109,16 +109,6 @@ function Hero() {
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => setPaused((p) => !p)}
-        aria-pressed={paused}
-        className="motion-toggle absolute bottom-4 right-4 z-10 inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-control)] border border-line-strong bg-ink/70 px-4 font-display text-xs font-semibold uppercase tracking-[0.14em] text-text backdrop-blur transition-colors hover:border-cyan hover:text-cyan"
-        data-testid="button-toggle-motion"
-      >
-        {paused ? <Play aria-hidden className="h-4 w-4" /> : <Pause aria-hidden className="h-4 w-4" />}
-        {paused ? 'Resume animations' : 'Pause animations'}
-      </button>
       <div className="relative h-px overflow-hidden bg-line">
         <div className="scan absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-cyan to-transparent" />
       </div>
@@ -127,17 +117,18 @@ function Hero() {
 }
 
 function Categories() {
+  const { locale, t } = useLocale();
   return (
     <section id="categories" aria-labelledby="cat-title" className="section">
       <div className="container-nexa">
-        <p className="eyebrow">Start with a category</p>
-        <h2 id="cat-title" tabIndex={-1} className="mt-2 focus:outline-none">Core of the build</h2>
+        <p className="eyebrow">{t('Start with a category')}</p>
+        <h2 id="cat-title" tabIndex={-1} className="mt-2 focus:outline-none">{t('Core of the build')}</h2>
         <ul data-reveal className="reveal-stagger mt-10 grid gap-6 md:grid-cols-3">
           {FEATURED_CATS.map((fc, i) => {
             const c = CATEGORIES.find((x) => x.slug === fc.slug)!;
             return (
               <li key={c.slug}>
-                <CategoryCard slug={c.slug} name={c.name} blurb={c.blurb} index={i + 1} art={fc.art} />
+              <CategoryCard slug={c.slug} name={c.name} blurb={c.blurb} index={i + 1} art={fc.art} />
               </li>
             );
           })}
@@ -148,6 +139,7 @@ function Categories() {
 }
 
 function Monitors() {
+  const { locale, t } = useLocale();
   const { status, data, retry } = useAsync(getProducts, 'home-products');
   const monitors = (data ?? []).filter((p) => p.featuredMonitor);
   return (
@@ -156,11 +148,11 @@ function Monitors() {
       <div className="container-nexa relative">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Featured gaming monitors</p>
+            <p className="eyebrow">{t('Featured gaming monitors')}</p>
             <h2 id="mon-title" className="mt-2">Samsung. SADES. MSI.</h2>
           </div>
           <Link to="/products?category=gaming-monitors" className="inline-flex min-h-[44px] items-center gap-2 font-display font-semibold uppercase tracking-[0.12em] text-cyan hover:underline">
-            All monitors <ArrowRight aria-hidden className="h-4 w-4" />
+            {t('All monitors')} <ArrowRight aria-hidden className="rtl-mirror h-4 w-4" />
           </Link>
         </div>
         {status === 'error' && <div className="mt-8"><ErrorPanel body="Monitors could not be loaded." onRetry={retry} /></div>}
@@ -168,7 +160,7 @@ function Monitors() {
           {status === 'loading' && !data
             ? [0, 1, 2].map((i) => <li key={i}><div className="skeleton h-[420px]" /></li>)
             : monitors.map((m) => (
-                <li key={m.id}><ProductCard product={m} /></li>
+                <li key={m.id}><ProductCard product={productCopy(m, locale)} /></li>
               ))}
         </ul>
       </div>
@@ -177,20 +169,21 @@ function Monitors() {
 }
 
 function Featured() {
+  const { locale, t } = useLocale();
   const { status, data, retry } = useAsync(getProducts, 'home-featured');
   const items = (data ?? []).filter((p) => p.featured && !p.featuredMonitor);
   return (
     <section aria-labelledby="feat-title" className="section">
       <div className="container-nexa">
-        <p className="eyebrow">Featured products</p>
-        <h2 id="feat-title" className="mt-2">Hardware worth a closer look</h2>
+        <p className="eyebrow">{t('Featured products')}</p>
+        <h2 id="feat-title" className="mt-2">{t('Hardware worth a closer look')}</h2>
         {status === 'error' ? (
           <div className="mt-8"><ErrorPanel body="Featured products could not be loaded." onRetry={retry} /></div>
         ) : (
           <ul data-reveal className="reveal-stagger mt-10 grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-4" aria-busy={status === 'loading'}>
             {status === 'loading' && !data
               ? [0, 1, 2, 3].map((i) => <li key={i}><ProductCardSkeleton /></li>)
-              : items.map((p) => <li key={p.id}><ProductCard product={p} /></li>)}
+              : items.map((p) => <li key={p.id}><ProductCard product={productCopy(p, locale)} /></li>)}
           </ul>
         )}
       </div>
@@ -199,6 +192,7 @@ function Featured() {
 }
 
 function Promo() {
+  const { t } = useLocale();
   return (
     <section aria-labelledby="promo-title" className="container-nexa">
       <div data-reveal className="relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2 p-8 md:p-12">
@@ -206,10 +200,10 @@ function Promo() {
         <div aria-hidden className="grid-bg absolute inset-0 opacity-60" />
         <div className="relative flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="promo-title">Explore the full catalog</h2>
-            <p className="mt-2 max-w-xl text-muted">Every product in one place. Search by name, then narrow by category, brand, price and availability.</p>
+            <h2 id="promo-title">{t('Explore the full catalog')}</h2>
+            <p className="mt-2 max-w-xl text-muted">{t('Every product in one place. Search by name, then narrow by category, brand, price and availability.')}</p>
           </div>
-          <ButtonLink to="/products" size="lg">Browse all products <ArrowRight aria-hidden className="h-5 w-5" /></ButtonLink>
+          <ButtonLink to="/products" size="lg">{t('Browse all products')} <ArrowRight aria-hidden className="rtl-mirror h-5 w-5" /></ButtonLink>
         </div>
       </div>
     </section>
@@ -224,20 +218,21 @@ const BENEFITS = [
 ];
 
 function Benefits() {
+  const { t } = useLocale();
   return (
     <section aria-labelledby="ben-title" className="section">
       <div className="container-nexa grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="eyebrow">How the site works for you</p>
-          <h2 id="ben-title" className="mt-2">Built for people who read the spec sheet</h2>
+          <p className="eyebrow">{t('How the site works for you')}</p>
+          <h2 id="ben-title" className="mt-2">{t('Built for people who read the spec sheet')}</h2>
           <HardDrive aria-hidden className="mt-8 hidden h-24 w-24 text-purple/70 lg:block" strokeWidth={1} />
         </div>
         <ul data-reveal className="reveal-stagger grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2">
           {BENEFITS.map((b) => (
             <li key={b.title} className="benefit group flex flex-col gap-3 bg-surface p-6 transition-colors duration-200 hover:bg-surface-2">
               <b.icon aria-hidden className="h-7 w-7 text-cyan transition-transform duration-200 ease-[var(--ease-nexa)] group-hover:-translate-y-0.5 group-hover:scale-110" />
-              <h3>{b.title}</h3>
-              <p className="text-muted">{b.body}</p>
+              <h3>{t(b.title)}</h3>
+              <p className="text-muted">{t(b.body)}</p>
             </li>
           ))}
         </ul>

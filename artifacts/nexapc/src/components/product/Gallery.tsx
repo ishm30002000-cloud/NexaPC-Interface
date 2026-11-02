@@ -5,8 +5,10 @@ import { ProductImage } from '@/components/nx/ProductImage';
 import { Dialog } from '@/components/nx/overlay';
 import { assetUrl } from '@/lib/meta';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/lib/i18n';
 
 export function Gallery({ product }: { product: Product }) {
+  const { t, locale } = useLocale();
   const imgs = product.images;
   const [i, setI] = useState(0);
   const [zoom, setZoom] = useState(false);
@@ -20,7 +22,7 @@ export function Gallery({ product }: { product: Product }) {
     return (
       <div className="panel p-3">
         <ProductImage product={product} eager />
-        <p className="mt-3 px-2 text-sm text-muted">A real manufacturer photo for this model has not been supplied yet.</p>
+        <p className="mt-3 px-2 text-sm text-muted">{t('A real manufacturer photo for this model has not been supplied yet.')}</p>
       </div>
     );
   }
@@ -42,25 +44,25 @@ export function Gallery({ product }: { product: Product }) {
           touchX.current = null;
         }}
       >
-        <button type="button" onClick={() => setZoom(true)} className="group relative block w-full cursor-zoom-in rounded-xl" aria-label={`Zoom image ${i + 1} of ${n}`} data-testid="button-zoom">
+        <button type="button" onClick={() => setZoom(true)} className="group relative block w-full cursor-zoom-in rounded-xl" aria-label={`${t('Zoom image')} ${i + 1} ${t('of')} ${n}`} data-testid="button-zoom">
           <ProductImage product={product} index={i} eager sizes="(min-width:1024px) 50vw, 100vw" />
           <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-ink/80 px-3 py-1.5 text-sm">
-            <ZoomIn aria-hidden className="h-4 w-4" /> Zoom
+            <ZoomIn aria-hidden className="h-4 w-4" /> {t('Zoom')}
           </span>
         </button>
         {n > 1 && (
           <>
-            <button type="button" onClick={() => go(-1)} aria-label="Previous image" className="absolute left-5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line-strong bg-ink/80 hover:border-cyan"><ChevronLeft aria-hidden className="h-5 w-5" /></button>
-            <button type="button" onClick={() => go(1)} aria-label="Next image" className="absolute right-5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line-strong bg-ink/80 hover:border-cyan"><ChevronRight aria-hidden className="h-5 w-5" /></button>
+            <button type="button" onClick={() => go(-1)} aria-label={t('Previous image')} className="gallery-prev absolute left-5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line-strong bg-ink/80 hover:border-cyan"><ChevronLeft aria-hidden className="rtl-mirror h-5 w-5" /></button>
+            <button type="button" onClick={() => go(1)} aria-label={t('Next image')} className="gallery-next absolute right-5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line-strong bg-ink/80 hover:border-cyan"><ChevronRight aria-hidden className="rtl-mirror h-5 w-5" /></button>
           </>
         )}
       </div>
-      <p className="sr-only" aria-live="polite">Image {i + 1} of {n}</p>
+      <p className="sr-only" aria-live="polite">{t('Image')} {i + 1} {t('of')} {n}</p>
       {n > 1 && (
         <ul className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
           {imgs.map((img, k) => (
             <li key={img.src}>
-              <button type="button" onClick={() => setI(k)} aria-label={`View image ${k + 1} of ${n}`} aria-current={k === i ? 'true' : undefined} className={cn('h-20 w-24 overflow-hidden rounded-lg border-2 bg-surface p-1', k === i ? 'border-cyan' : 'border-line hover:border-line-strong')}>
+              <button type="button" onClick={() => setI(k)} aria-label={`${t('View image')} ${k + 1} ${t('of')} ${n}`} aria-current={k === i ? 'true' : undefined} className={cn('h-20 w-24 overflow-hidden rounded-lg border-2 bg-surface p-1', k === i ? 'border-cyan' : 'border-line hover:border-line-strong')}>
                 <img src={assetUrl(img.src)} alt="" width={img.width} height={img.height} loading="lazy" className="h-full w-full object-contain" />
               </button>
             </li>
@@ -77,7 +79,7 @@ export function Gallery({ product }: { product: Product }) {
             setOrigin(`${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`);
           }}
           aria-pressed={magnified}
-          aria-label={magnified ? 'Reduce magnification' : 'Magnify image'}
+          aria-label={t(magnified ? 'Reduce magnification' : 'Magnify image')}
         >
           <img src={assetUrl(imgs[i].src)} alt={imgs[i].alt} width={imgs[i].width} height={imgs[i].height} className="h-full w-full object-contain transition-transform duration-200" style={{ transform: magnified ? 'scale(2.2)' : 'scale(1)', transformOrigin: origin }} />
         </button>

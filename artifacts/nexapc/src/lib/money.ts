@@ -1,4 +1,4 @@
-const fmt = new Intl.NumberFormat('en-KW', {
+const formatter = () => new Intl.NumberFormat('en-KW', {
   style: 'currency',
   currency: 'KWD',
   minimumFractionDigits: 3,
@@ -6,12 +6,12 @@ const fmt = new Intl.NumberFormat('en-KW', {
 });
 
 /** The one money formatter. Input is integer fils (1 KWD = 1000 fils). */
-export function formatMoney(fils: number): string {
-  return fmt.format(Math.round(fils) / 1000);
+export function formatMoney(fils: number, _locale: 'en' = 'en'): string {
+  return formatter().format(Math.round(fils) / 1000);
 }
 
-export function formatPrice(fils: number | null): string {
-  return fils == null ? 'Price pending' : formatMoney(fils);
+export function formatPrice(fils: number | null, locale: 'en' = 'en'): string {
+  return fils == null ? 'Price pending' : formatMoney(fils, locale);
 }
 
 /** Parse a typed KWD amount ("12.5") into integer fils, or null if invalid. */
