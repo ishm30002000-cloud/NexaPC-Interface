@@ -9,11 +9,11 @@ The user authorized converting NexaPC from a front-end preview into a working ba
 
 **How to apply:** Use Supabase for persistence rather than introducing a different database. Preserve the English storefront. Prices are KWD with three decimals. Never invent product specifications, stock, reviews, promotions, shipping, warranties, policies, company history, or testimonials. Missing commercial data must remain visibly pending; a missing price is not zero. Use real photos for real manufacturer products, never generated product imagery.
 
-The user authorized sample prices for the current catalog, not confirmed selling prices.
+The user confirmed the current nine named-product prices as selling prices and requested removal of the sample-price bar.
 
-**Why:** The user selected “Use sample prices” after being told that sample prices would be clearly labeled for testing.
+**Why:** After initially authorizing sample prices, the user explicitly confirmed those prices and asked to remove the testing banner.
 
-**How to apply:** Keep sample pricing visibly distinguished from genuine selling prices. Do not treat this as permission to invent stock or other commercial claims. Leave unspecified product models pending. Use owner-provided prices when converting the catalog to real selling prices.
+**How to apply:** Treat these approved amounts as confirmed, without sample-price labels. Do not infer stock or other commercial claims from price confirmation. Leave unspecified product models pending and seek owner input for new or changed selling prices.
 
 The website should support English only, without an Arabic language switch.
 

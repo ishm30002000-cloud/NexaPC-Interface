@@ -53,13 +53,14 @@ Manage real catalog prices, stock, product copy and order statuses in the
 Supabase Table Editor until a separate store-management interface is built.
 Prices are integer fils: 12.750 KWD = 12750 fils.
 
-The owner authorized **sample prices for testing** on the nine named products.
-These are fictional values, not market estimates or confirmed selling prices.
-`details.isSamplePrice` marks them and drives the storefront notices and labels.
+The owner **confirmed the current nine named-product prices as selling prices**.
+Their amounts are unchanged and `details.isSamplePrice` is now `false`, so the
+sample-price banner and labels are hidden throughout the storefront.
 The RAM placeholder remains unpriced until an actual model is supplied.
-`seeds/sample-prices.sql` is the manually applied, non-overwriting seed.
-When entering a genuine selling price, update `price_fils` and set
-`details.isSamplePrice` to `false`; do not change stock unless it is known.
+`seeds/sample-prices.sql` records the earlier testing seed;
+`seeds/confirm-catalog-prices.sql` records the owner's confirmation.
+When editing a confirmed selling price, update `price_fils` and keep
+`details.isSamplePrice` set to `false`; do not change stock unless it is known.
 
 ## Website pictures
 
