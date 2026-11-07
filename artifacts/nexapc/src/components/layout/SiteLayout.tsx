@@ -8,6 +8,17 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { LogoMark } from './Logo';
 import { useLocale } from '@/lib/i18n';
+import { useCatalog } from '@/store/catalog';
+
+function SamplePricingNotice() {
+  const { products } = useCatalog();
+  if (!products.some(product => product.isSamplePrice && product.priceFils != null)) return null;
+  return (
+    <aside className="border-b border-cyan/25 bg-cyan/10 px-4 py-3 text-center text-sm" data-testid="notice-sample-prices">
+      <strong>Sample prices in KWD.</strong> For testing only—not confirmed selling prices.
+    </aside>
+  );
+}
 
 function SkipLink() {
   const { t } = useLocale();
@@ -70,6 +81,7 @@ export function SiteLayout() {
     <div className="noise flex min-h-[100dvh] flex-col">
       <SkipLink />
       <Header />
+      <SamplePricingNotice />
       <CartRecoveredNotice />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         <ErrorBoundary resetKey={pathname}>
@@ -104,6 +116,7 @@ export function CheckoutLayout() {
         </div>
         <div className="glow-line opacity-60" />
       </header>
+      <SamplePricingNotice />
       <CartRecoveredNotice />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         <Suspense fallback={<RouteFallback />}>

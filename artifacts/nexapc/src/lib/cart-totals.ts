@@ -19,6 +19,8 @@ export interface CartTotals {
   knownSubtotalFils: number;
   /** True when at least one line has no price — totals must say "Pricing pending". */
   hasPendingPrices: boolean;
+  /** At least one priced line uses an explicitly marked testing price. */
+  hasSamplePrices?: boolean;
   /** Full subtotal, only when every line has a price. */
   subtotalFils: number | null;
   /** Shipping and discounts are not configured; null = "Calculated at checkout". */
@@ -69,6 +71,7 @@ export function computeTotals(cart: CartLine[], catalog: Product[]): CartTotals 
     itemCount: count,
     knownSubtotalFils: known,
     hasPendingPrices: pending,
+    hasSamplePrices: lines.some(line => line.product.isSamplePrice && line.product.priceFils != null),
     subtotalFils: subtotal,
     shippingFils: null,
     discountFils: null,

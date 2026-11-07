@@ -68,7 +68,7 @@ export default function Cart() {
                   <div className="flex flex-col gap-1">
                     <p className="text-sm text-muted">{product.brand}</p>
                     <h3 className="clamp-2 text-lg"><Link to={`/products/${product.slug}`} className="hover:text-cyan">{product.name}</Link></h3>
-                    <p className="text-sm text-muted">{t('Unit price:')} <span className="text-text">{product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}</span></p>
+                    <p className="text-sm text-muted">{product.isSamplePrice ? 'Sample unit price:' : t('Unit price:')} <span className="text-text">{product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}</span></p>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <QuantityStepper value={quantity} max={maxQuantityFor(product)} onChange={(n) => setQuantity(product.id, n)} label={`Quantity for ${product.name}`} />

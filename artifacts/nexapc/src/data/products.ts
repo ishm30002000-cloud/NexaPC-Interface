@@ -29,6 +29,8 @@ export interface Product {
   category: CategorySlug;
   /** Integer fils. null means not provided, never zero. */
   priceFils: number | null;
+  /** Explicitly authorized testing prices, not confirmed selling prices. */
+  isSamplePrice?: boolean;
   /** null means stock has not been provided. */
   stock: number | null;
   images: ProductImage[];

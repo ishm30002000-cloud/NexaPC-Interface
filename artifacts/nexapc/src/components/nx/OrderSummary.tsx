@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/lib/i18n';
 
 /** Shared order summary: never shows unknown prices as zero. */
-export function OrderSummary({ totals, children, collapsible }: { totals: Pick<CartTotals, 'itemCount' | 'knownSubtotalFils' | 'hasPendingPrices' | 'subtotalFils' | 'shippingFils' | 'discountFils' | 'totalFils'>; children?: ReactNode; collapsible?: boolean }) {
+export function OrderSummary({ totals, children, collapsible }: { totals: Pick<CartTotals, 'itemCount' | 'knownSubtotalFils' | 'hasPendingPrices' | 'hasSamplePrices' | 'subtotalFils' | 'shippingFils' | 'discountFils' | 'totalFils'>; children?: ReactNode; collapsible?: boolean }) {
   const [open, setOpen] = useState(false);
   const { locale, t } = useLocale();
   const money = (fils: number | null) => fils == null ? t('Pricing pending') : formatMoney(fils, locale);
   const totalText = money(totals.totalFils);
   const body = (
     <div className="flex flex-col gap-4">
+      {totals.hasSamplePrices && <p className="text-sm text-muted">Totals include sample prices for testing only. Selling prices and delivery charges are not confirmed.</p>}
       <dl className="flex flex-col gap-3 text-[0.95rem]">
         <div className="flex justify-between gap-4">
           <dt className="text-muted">{t('Items')}</dt>

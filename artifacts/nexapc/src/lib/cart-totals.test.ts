@@ -10,6 +10,14 @@ const mk = (id: string, priceFils: number | null, stock: number | null = null): 
 });
 
 describe('cart totals (integer fils)', () => {
+  it('uses saved sample prices in totals while preserving their testing status', () => {
+    const sample = { ...mk('sample', 54900), isSamplePrice: true };
+    const totals = computeTotals([{ productId: 'sample', quantity: 2 }], [sample]);
+    expect(totals.subtotalFils).toBe(109800);
+    expect(totals.hasSamplePrices).toBe(true);
+    expect(formatMoney(totals.totalFils!)).toContain('109.800');
+    expect(computeTotals([{ productId: 'real', quantity: 1 }], [mk('real', 1000)]).hasSamplePrices).toBe(false);
+  });
   it('sums known prices without float drift', () => {
     const cat = [mk('a', 100), mk('b', 200)];
     const t = computeTotals([{ productId: 'a', quantity: 3 }, { productId: 'b', quantity: 1 }], cat);

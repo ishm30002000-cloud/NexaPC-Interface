@@ -46,7 +46,7 @@ function BuyBox({ product }: { product: Product }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-sm text-muted">{t('Price')}</p>
+        <p className="text-sm text-muted">{product.isSamplePrice ? 'Sample price · testing only' : t('Price')}</p>
         <p className={product.priceFils == null ? 'font-display text-3xl font-semibold text-muted' : 'tabular font-display text-4xl font-bold text-cyan'} data-testid="text-product-price">
           {product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}
         </p>
@@ -156,7 +156,10 @@ export default function ProductDetail() {
 
       <div className="no-print fixed inset-x-0 bottom-0 border-t border-line bg-ink/95 backdrop-blur lg:hidden" style={{ zIndex: 'var(--z-sticky-bar)' }}>
         <div className="container-nexa flex items-center justify-between gap-4 py-3">
-          <p className={product.priceFils == null ? 'font-display font-semibold text-muted' : 'tabular font-display text-xl font-bold text-cyan'}>{product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}</p>
+          <div>
+            {product.isSamplePrice && <p className="text-xs text-muted">Sample price</p>}
+            <p className={product.priceFils == null ? 'font-display font-semibold text-muted' : 'tabular font-display text-xl font-bold text-cyan'}>{product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}</p>
+          </div>
           <Button disabled={avail === 'out-of-stock'} onClick={() => add(product, 1)} icon={<ShoppingCart aria-hidden className="h-4 w-4" />} data-testid="button-add-to-cart-sticky">
             {avail === 'out-of-stock' ? t('Out of Stock') : t('Add to Cart')}
           </Button>

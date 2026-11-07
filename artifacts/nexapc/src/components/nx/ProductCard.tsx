@@ -38,6 +38,7 @@ export function ProductCard({ product, headingLevel = 3 }: { product: Product; h
         <p className={product.priceFils == null ? 'font-display text-lg font-semibold text-muted' : 'tabular font-display text-xl font-bold text-cyan'} data-testid={`text-price-${product.slug}`}>
           {product.priceFils == null ? t('Price pending') : formatPrice(product.priceFils, locale)}
         </p>
+        {product.isSamplePrice && product.priceFils != null && <p className="text-xs font-medium text-muted">Sample price · testing only</p>}
       </div>
       <div className="grid grid-cols-1 gap-2 px-2 pb-2 min-[380px]:grid-cols-2">
         <Link
