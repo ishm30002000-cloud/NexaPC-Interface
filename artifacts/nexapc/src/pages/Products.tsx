@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { PackageSearch, Search, SlidersHorizontal, X } from 'lucide-react';
 import { usePageMeta } from '@/lib/meta';
 import { useAsync, useDebounced } from '@/hooks/use-async';
-import { getBrands, getCategories, getProducts } from '@/services/products';
+import { getCategories, getProducts } from '@/services/products';
 import { applyCatalog, countActiveFilters, EMPTY_FILTERS, filtersFromParams, paramsFromFilters, SORT_OPTIONS, AVAILABILITY_OPTIONS, type CatalogFilters, type SortKey } from '@/lib/catalog';
 import { formatMoney } from '@/lib/money';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,10 +22,10 @@ export default function Products() {
   const [sp, setSp] = useSearchParams();
   const categories = getCategories().map((c) => ({ ...c, name: t(c.name) }));
   const categoryData = useMemo(() => categories, [locale]);
-  const brands = getBrands();
   const filters = useMemo(() => filtersFromParams(sp, categoryData.map((c) => c.slug)), [sp, categoryData]);
   const page = Math.max(1, Number(sp.get('page')) || 1);
   const { status, data, retry } = useAsync(getProducts, 'catalog');
+  const brands = [...new Set((data ?? []).map(p => p.brand))].sort();
 
   const catName = filters.categories.length === 1 ? categoryData.find((c) => c.slug === filters.categories[0])?.name : null;
   usePageMeta(catName ?? 'Products', 'Browse PC components, gaming monitors, SSDs, cooling and graphics cards. Filter by category, brand, price and availability.');

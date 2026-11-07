@@ -1,37 +1,24 @@
-/**
- * Product service — the only way UI reads catalog data.
- * Swap these implementations for real API calls later; signatures stay the same.
- */
-import { CATEGORIES, products, type Product } from '@/data/products';
+import { CATEGORIES, type Product } from '@/data/products';
+import { supabase } from '@/lib/supabase';
 
-const latency = () => new Promise((r) => setTimeout(r, 220));
-
+function product(row: { id: string; slug: string; details: unknown; price_fils: number | null; stock: number | null }): Product {
+  return { ...(row.details as Omit<Product, 'id' | 'slug' | 'priceFils' | 'stock'>), id: row.id, slug: row.slug, priceFils: row.price_fils, stock: row.stock };
+}
 export async function getProducts(): Promise<Product[]> {
-  await latency();
-  return products;
+  const { data, error } = await supabase.from('products').select('*').order('created_at').order('id');
+  if (error) throw error;
+  return (data ?? []).map(product);
 }
-
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  await latency();
-  return products.find((p) => p.slug === slug) ?? null;
+  const { data, error } = await supabase.from('products').select('*').eq('slug', slug).maybeSingle();
+  if (error) throw error;
+  return data ? product(data) : null;
 }
-
-export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
-  await latency();
-  const same = products.filter((p) => p.id !== product.id && p.category === product.category);
-  const others = products.filter((p) => p.id !== product.id && p.category !== product.category && !p.isPlaceholder);
-  return [...same, ...others].slice(0, limit);
+export async function getRelatedProducts(source: Product, limit = 4): Promise<Product[]> {
+  const products = await getProducts();
+  return [
+    ...products.filter(p => p.id !== source.id && p.category === source.category),
+    ...products.filter(p => p.id !== source.id && p.category !== source.category && !p.isPlaceholder),
+  ].slice(0, limit);
 }
-
-/** Synchronous lookup used by the cart to re-read names/prices. */
-export function getProductsSync(): Product[] {
-  return products;
-}
-
-export function getCategories() {
-  return CATEGORIES;
-}
-
-export function getBrands(): string[] {
-  return [...new Set(products.map((p) => p.brand))].sort((a, b) => a.localeCompare(b));
-}
+export function getCategories() { return CATEGORIES; }

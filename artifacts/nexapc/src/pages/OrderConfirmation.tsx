@@ -1,105 +1,64 @@
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Clock, Copy, Eye, Printer, SearchX, XCircle } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle2, Copy, Printer } from 'lucide-react';
 import { usePageMeta } from '@/lib/meta';
-import { getPreviewOrder, type OrderStatus } from '@/services/order-preview';
-import { computeTotals } from '@/lib/cart-totals';
-import { getProductsSync } from '@/services/products';
+import { useAuth } from '@/store/auth';
+import { getOrder } from '@/services/customer';
 import { formatMoney } from '@/lib/money';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Button, ButtonLink } from '@/components/nx/Button';
-import { Notice } from '@/components/nx/feedback';
-import { OrderSummary } from '@/components/nx/OrderSummary';
-import { cn } from '@/lib/utils';
-import { useLocale, productCopy } from '@/lib/i18n';
-
-const BANNER: Record<OrderStatus | 'not-found', { icon: typeof CheckCircle2; title: string; body: string; cls: string }> = {
-  confirmed: { icon: CheckCircle2, title: 'Order confirmed', body: 'This is how a confirmed order will look.', cls: 'border-success/60 text-success' },
-  pending: { icon: Clock, title: 'Payment pending', body: 'This is how an order awaiting payment will look.', cls: 'border-warn/60 text-warn' },
-  failed: { icon: XCircle, title: 'Payment failed', body: 'This is how a failed payment will look.', cls: 'border-danger/60 text-danger' },
-  'not-found': { icon: SearchX, title: 'Order not found', body: 'There is no order with this reference. Orders cannot be placed on this site yet.', cls: 'border-line-strong text-muted' },
-};
+import { Notice, ErrorPanel } from '@/components/nx/feedback';
 
 export default function OrderConfirmation() {
-  const { locale, t } = useLocale();
+  usePageMeta('Order request', 'View your NexaPC order request.');
   const { reference = '' } = useParams();
-  const [sp] = useSearchParams();
-  const order = getPreviewOrder(reference, sp.get('preview'));
-  const variant = order?.status ?? 'not-found';
-  usePageMeta(order ? t('Preview: order') : 'Order not found', 'Order confirmation layout preview.');
+  const { user, loading } = useAuth();
+  const query = useQuery({ queryKey: ['customer', user?.id, 'order', reference], queryFn: () => getOrder(reference), enabled: !!user, refetchInterval: 30_000 });
   const [copied, setCopied] = useState<string | null>(null);
-  const b = BANNER[variant];
-  const totals = order ? computeTotals(order.items, getProductsSync()) : null;
-
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(reference); setCopied(t('Reference copied')); }
-    catch { setCopied(t('Could not copy. Select the reference and copy it manually.')); }
-  };
-
-  return (
-    <div className="container-nexa py-8">
-      <Breadcrumb items={[{ label: t('Home'), to: '/' }, { label: t('Order confirmation') }]} />
-      <div className="no-print mt-6">
-        <Notice tone="warn" title={t('Preview mode - sample data, not a real order')}>
-          {t('No order has been placed. Switch variants:')}{' '}
-          {(['confirmed', 'pending', 'failed'] as const).map((s) => (
-            <Link key={s} to={`?preview=${s}`} className={cn('mr-3 inline-flex min-h-[44px] items-center font-semibold underline underline-offset-4', variant === s ? 'text-text' : 'text-cyan')} aria-current={variant === s ? 'page' : undefined}>{t(BANNER[s].title)}</Link>
-          ))}
-          <Link to="?" className="inline-flex min-h-[44px] items-center font-semibold text-cyan underline underline-offset-4">{t('not found')}</Link>
-        </Notice>
-      </div>
-
-      <div className={cn('print-plain panel mt-6 flex items-start gap-4 border-2 p-6', b.cls)} role="status">
-        <b.icon aria-hidden className="h-9 w-9 shrink-0" />
-        <div>
-          <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em]"><Eye aria-hidden className="h-4 w-4" /> {t('Preview')}</p>
-          <h1 className="text-[clamp(1.75rem,1.4rem+1.6vw,2.75rem)] text-text">{t(b.title)}</h1>
-          <p className="text-muted">{t(b.body)}</p>
-        </div>
-      </div>
-
-      <div className="print-plain panel mt-6 flex flex-wrap items-center justify-between gap-4 p-5">
-        <div>
-          <p className="text-sm text-muted">{t('Order reference')}</p>
-          <p className="font-display text-2xl font-bold tracking-wider" data-testid="text-reference">{reference}</p>
-        </div>
-        <div className="no-print flex flex-col items-end">
-          <Button variant="secondary" onClick={copy} icon={<Copy aria-hidden className="h-4 w-4" />} data-testid="button-copy-ref">{t('Copy')}</Button>
-          <p role="status" aria-live="polite" className="text-sm text-muted">{copied}</p>
-        </div>
-      </div>
-
-      {order && totals && (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="flex flex-col gap-6">
-            <section aria-labelledby="oc-items" className="print-plain panel p-5">
-              <h2 id="oc-items" className="text-xl">{t('Items')}</h2>
-              <ul className="mt-3 divide-y divide-line">
-                {totals.lines.map((l) => (
-                  <li key={l.product.id} className="flex flex-wrap justify-between gap-3 py-3">
-                    <span className="min-w-0 flex-1">{productCopy(l.product, locale).name} <span className="text-muted">x {l.quantity}</span></span>
-                    <span>{l.subtotalFils == null ? t('Price pending') : formatMoney(l.subtotalFils, locale)}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section aria-labelledby="oc-del" className="print-plain panel p-5">
-              <h2 id="oc-del" className="text-xl">{t('Delivery details')}</h2>
-              <p className="mt-2">{order.delivery.fullName}</p>
-              <p className="text-muted">{order.delivery.phone}</p>
-              <p className="text-muted">{order.delivery.address}</p>
-            </section>
-          </div>
-          <div className="print-plain"><OrderSummary totals={totals} /></div>
-        </div>
-      )}
-
-      <div className="no-print mt-8 flex flex-wrap gap-3">
-        <ButtonLink to="/products">{t('Continue Shopping')}</ButtonLink>
-        <ButtonLink to="/account/orders" variant="secondary">{t('View My Orders')}</ButtonLink>
-        <Button variant="secondary" onClick={() => window.print()} icon={<Printer aria-hidden className="h-4 w-4" />}>{t('Print receipt')}</Button>
-        <ButtonLink to="/" variant="ghost">{t('Home')}</ButtonLink>
+  if (loading) return <div className="container-nexa py-12" role="status">Checking your session…</div>;
+  if (!user) return <div className="container-nexa py-12"><Notice tone="info">Sign in to view your order request.</Notice><ButtonLink className="mt-4" to={`/login?next=${encodeURIComponent(`/order-confirmation/${reference}`)}`}>Sign in</ButtonLink></div>;
+  if (query.isPending) return <div className="container-nexa py-12" role="status">Loading your request…</div>;
+  if (query.isError) return <div className="container-nexa py-12"><ErrorPanel body="Your request could not be loaded." onRetry={() => { void query.refetch(); }} /></div>;
+  const order = query.data;
+  if (!order) return <div className="container-nexa py-12"><h1>Order request not found</h1><p className="mt-4 text-muted">This reference is not available to your account.</p><ButtonLink className="mt-6" to="/account/orders">My orders</ButtonLink></div>;
+  const d = order.delivery;
+  return <div className="container-nexa py-8">
+    <Breadcrumb items={[{ label: 'Home', to: '/' }, { label: 'Orders', to: '/account/orders' }, { label: order.reference }]} />
+    <section className="panel mt-6 flex items-start gap-4 border-success/60 p-6">
+      <CheckCircle2 className="h-9 w-9 shrink-0 text-success" aria-hidden />
+      <div><h1 className="text-3xl">Order request received</h1><p className="mt-2 capitalize">{order.status.replaceAll('_', ' ')}</p><p className="mt-2 text-muted">Saved on {new Date(order.created_at).toLocaleString('en-KW')}</p></div>
+    </section>
+    <div className="mt-6"><Notice tone="info">This is an order request, not a paid purchase. No payment was taken or stock reserved. Final prices, availability and delivery charges require confirmation.</Notice></div>
+    <div className="panel mt-6 flex flex-wrap items-center justify-between gap-4 p-5">
+      <div><p className="text-sm text-muted">Request reference</p><p className="font-display text-2xl font-bold tracking-wider" data-testid="text-reference">{order.reference}</p></div>
+      <div className="no-print">
+        <Button variant="secondary" icon={<Copy className="h-4 w-4" />} onClick={async () => {
+          try { await navigator.clipboard.writeText(order.reference); setCopied('Reference copied'); }
+          catch { setCopied('Select the reference and copy it manually.'); }
+        }}>Copy</Button>
+        <p role="status" className="text-sm text-muted">{copied}</p>
       </div>
     </div>
-  );
+    <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+      <section className="panel p-5"><h2>Items</h2>
+        <ul className="mt-3 divide-y divide-line">{order.order_items.map(item => <li className="flex flex-wrap justify-between gap-3 py-3" key={item.id}>
+          <span className="min-w-0 flex-1">{item.name} <span className="text-muted">x {item.quantity}</span></span>
+          <span>{item.unit_price_fils == null ? 'Price pending' : formatMoney(item.unit_price_fils * item.quantity)}</span>
+        </li>)}</ul>
+        <p className="mt-4 border-t border-line pt-4 font-semibold">Product subtotal: {order.subtotal_fils == null ? 'Pricing pending' : formatMoney(order.subtotal_fils)}</p>
+        <p className="text-sm text-muted">Delivery charges and final total are not confirmed.</p>
+      </section>
+      <section className="panel p-5"><h2>Delivery details</h2>
+        <p className="mt-3">{d.fullName}</p><p className="text-muted">{d.email} / {d.phone}</p>
+        <p className="text-muted">Block {d.block}, {d.street}, Building {d.building}, {d.city}, {d.governorate}</p>
+        {d.notes && <p className="mt-2 text-muted">Notes: {d.notes}</p>}
+      </section>
+    </div>
+    <div className="no-print mt-8 flex flex-wrap gap-3">
+      <ButtonLink to="/products">Continue shopping</ButtonLink>
+      <ButtonLink to="/account/orders" variant="secondary">My orders</ButtonLink>
+      <Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={() => window.print()}>Print request</Button>
+    </div>
+  </div>;
 }

@@ -16,12 +16,13 @@ export default function ForgotPassword() {
   usePageMeta('Forgot password', 'Request a password reset for your NexaPC account.');
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema), defaultValues: { email: '' }, mode: 'onTouched' });
   return (
     <AuthShell crumbs={[{ label: t('Home'), to: '/' }, { label: t('Login'), to: '/login' }, { label: t('Forgot password') }]} title={t('Forgot password')} intro={t('Enter the email for your account.')}>
-      <form noValidate onSubmit={handleSubmit(async (v) => { setResult(null); const r = await auth.requestPasswordReset(v); if (!r.ok) setResult(r.message); }, () => setAttempt((a) => a + 1))} className="flex flex-col gap-5">
+      <form noValidate onSubmit={handleSubmit(async (v) => { setResult(null); const r = await auth.requestPasswordReset(v); setOk(r.ok); setResult(r.message ?? null); }, () => setAttempt((a) => a + 1))} className="flex flex-col gap-5">
         <ErrorSummary errors={summarize(errors as Record<string, { message?: unknown }>, ['email'])} focusKey={attempt} />
-        <div role="status" aria-live="polite">{result && <Notice tone="warn" title={t('Password reset is not connected yet')}>{t(result)}</Notice>}</div>
+        <div role="status" aria-live="polite">{result && <Notice tone={ok ? 'success' : 'warn'} title={ok ? 'Reset link requested' : 'Could not request reset'}>{result}</Notice>}</div>
         <TextField id="email" label={t('Email')} type="email" inputMode="email" autoComplete="email" required error={errors.email?.message ? t(errors.email.message) : undefined} {...register('email')} />
         <Button type="submit" size="lg" full loading={isSubmitting}>{t('Send reset link')}</Button>
         <Link to="/login" className="inline-flex min-h-[44px] items-center justify-center font-semibold text-cyan underline-offset-4 hover:underline">{t('Back to Login')}</Link>

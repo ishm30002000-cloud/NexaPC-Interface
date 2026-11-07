@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Check, CreditCard, Lock } from 'lucide-react';
@@ -14,8 +15,12 @@ import { OrderSummary } from '@/components/nx/OrderSummary';
 import { Notice } from '@/components/nx/feedback';
 import { cn } from '@/lib/utils';
 import { useLocale, productCopy } from '@/lib/i18n';
+import { useAuth } from '@/store/auth';
+import { useCatalog } from '@/store/catalog';
+import { addresses, getProfile, submitOrder } from '@/services/customer';
+import { backendError } from '@/lib/supabase';
 
-const STEPS = ['Delivery', 'Review', 'Payment'] as const;
+const STEPS = ['Delivery', 'Review', 'Submit request'] as const;
 const ORDER: (keyof DeliveryValues)[] = ['fullName', 'email', 'phone', 'governorate', 'city', 'block', 'street', 'building', 'notes'];
 
 function Steps({ step }: { step: number }) {
@@ -41,7 +46,16 @@ function Steps({ step }: { step: number }) {
 export default function Checkout() {
   const { locale, t } = useLocale();
   usePageMeta('Checkout', 'Enter delivery details and review your NexaPC order.');
-  const { totals } = useCart();
+  const { totals, ready, syncing, syncError, flush, acceptSubmitted } = useCart();
+  const { user, loading } = useAuth();
+  const { error: catalogError, refresh: refreshCatalog } = useCatalog();
+  const navigate = useNavigate();
+  const cache = useQueryClient();
+  const requestKey = useRef(crypto.randomUUID());
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const savedAddresses = useQuery({ queryKey: ['customer', user?.id, 'addresses'], queryFn: addresses.list, enabled: !!user });
+  const profile = useQuery({ queryKey: ['customer', user?.id, 'profile'], queryFn: getProfile, enabled: !!user });
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState<DeliveryValues | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -51,7 +65,21 @@ export default function Checkout() {
     mode: 'onTouched',
   });
   const { register, handleSubmit, formState: { errors } } = form;
+  const initialFilled = useRef(false);
+  useEffect(() => {
+    if (initialFilled.current || !user || !profile.data || !savedAddresses.data || form.formState.isDirty) return;
+    initialFilled.current = true;
+    const a = savedAddresses.data.find(a => a.isDefault) ?? savedAddresses.data[0];
+    form.reset({
+      fullName: a?.fullName ?? profile.data.fullName, email: user.email ?? '', phone: a?.phone ?? profile.data.phone,
+      governorate: a?.governorate ?? '', city: a?.city ?? '', block: a?.block ?? '', street: a?.street ?? '', building: a?.building ?? '', notes: '',
+    });
+  }, [profile.data, savedAddresses.data, user, form]);
 
+  if (loading) return <div className="container-nexa py-12" role="status">Checking your session…</div>;
+  if (!user) return <Navigate to="/login?next=%2Fcheckout" replace />;
+  if (!ready) return <div className="container-nexa py-12" role="status">{syncError ? 'Your saved cart could not be loaded. Retry sync above.' : 'Loading your saved cart…'}</div>;
+  if (catalogError) return <div className="container-nexa py-12"><Notice tone="warn">Prices and availability could not be refreshed. <button onClick={refreshCatalog} className="text-cyan underline">Retry catalog</button></Notice></div>;
   if (totals.lines.length === 0) return <Navigate to="/cart" replace />;
 
   const goStep = (n: number) => { setStep(n); requestAnimationFrame(() => document.getElementById('step-title')?.focus()); };
@@ -70,6 +98,12 @@ export default function Checkout() {
               <h2 id="step-title" tabIndex={-1} className="focus:outline-none">{t('Delivery details')}</h2>
               <ErrorSummary errors={summary} focusKey={attempt} />
               <p className="text-sm text-muted">{t('All fields are required unless marked optional.')}</p>
+              {!!savedAddresses.data?.length && <Select id="saved-address" label="Use a saved address" placeholder="Enter a new address" options={savedAddresses.data.map(a => ({ value: a.id, label: `${a.label}${a.isDefault ? ' (default)' : ''}` }))} onChange={e => {
+                const a = savedAddresses.data?.find(a => a.id === e.target.value);
+                if (!a) return;
+                form.reset({ fullName: a.fullName, email: user.email ?? '', phone: a.phone, governorate: a.governorate, city: a.city, block: a.block, street: a.street, building: a.building, notes: '' });
+              }} />}
+              {savedAddresses.isError && <Notice tone="warn">Saved addresses could not be loaded. You can enter delivery details below, or <button className="text-cyan underline" onClick={() => { void savedAddresses.refetch(); }} type="button">retry</button>.</Notice>}
               <div className="grid gap-5 md:grid-cols-2">
                 <TextField id="fullName" label={t('Full name')} required autoComplete="name" error={errors.fullName?.message ? t(errors.fullName.message) : undefined} {...register('fullName')} />
                 <TextField id="email" label={t('Email')} type="email" inputMode="email" required autoComplete="email" error={errors.email?.message ? t(errors.email.message) : undefined} {...register('email')} />
@@ -111,28 +145,40 @@ export default function Checkout() {
               </div>
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                 <Button variant="ghost" onClick={() => goStep(0)}><ArrowLeft aria-hidden className="rtl-mirror h-4 w-4" /> {t('Back')}</Button>
-                <Button size="lg" onClick={() => goStep(2)} data-testid="button-continue-payment">{t('Continue to payment')}</Button>
+                <Button size="lg" onClick={() => goStep(2)} data-testid="button-continue-payment">Continue to submission</Button>
               </div>
             </section>
           )}
 
           {step === 2 && (
             <section className="panel flex flex-col gap-6 p-6" aria-labelledby="step-title">
-              <h2 id="step-title" tabIndex={-1} className="focus:outline-none">{t('Payment')}</h2>
+              <h2 id="step-title" tabIndex={-1} className="focus:outline-none">Submit an order request</h2>
               <div className="relative grid min-h-[200px] place-items-center rounded-[var(--radius-card)] border-2 border-dashed border-line-strong bg-ink/50 p-6 text-center" data-testid="payment-placeholder">
                 <div className="flex flex-col items-center gap-3">
                   <CreditCard aria-hidden className="h-10 w-10 text-muted" />
-              <p className="font-display text-sm uppercase tracking-[0.2em] text-muted">{t('Payment provider area')}</p>
-              <p className="text-xl font-semibold">{t('Online payment is not available yet')}</p>
-              <p className="max-w-md text-muted">{t('A payment provider will be connected here later. No payment can be taken and no order can be placed on this site today.')}</p>
+              <p className="font-display text-sm uppercase tracking-[0.2em] text-muted">Store review</p>
+              <p className="text-xl font-semibold">No payment will be taken</p>
+              <p className="max-w-md text-muted">Your request will be saved for review. Prices, stock and delivery charges require confirmation. This is not a paid purchase and does not reserve stock.</p>
                 </div>
               </div>
-              <Notice tone="warn" title={t('No order will be placed')}>{t('Place Order is disabled until online payment is connected.')}</Notice>
+              <Notice tone="info" title="Order request only">You can view the request and its status in your account after submission. Online payment is not enabled.</Notice>
+              {submitError && <Notice tone="warn" title="Request could not be submitted">{submitError} Your cart has not been cleared on this page. You can retry safely.</Notice>}
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-                <Button variant="ghost" onClick={() => goStep(1)}><ArrowLeft aria-hidden className="rtl-mirror h-4 w-4" /> {t('Back to review')}</Button>
-                <Button size="lg" disabled aria-describedby="place-note" icon={<Lock aria-hidden className="h-4 w-4" />} data-testid="button-place-order">{t('Place Order')}</Button>
+                <Button variant="ghost" disabled={submitting} onClick={() => goStep(1)}><ArrowLeft aria-hidden className="rtl-mirror h-4 w-4" /> {t('Back to review')}</Button>
+                <Button size="lg" loading={submitting} disabled={syncing || !!syncError || !delivery} aria-describedby="place-note" icon={<Lock aria-hidden className="h-4 w-4" />} data-testid="button-place-order" onClick={async () => {
+                  if (!delivery || submitting) return;
+                  setSubmitting(true); setSubmitError(null);
+                  try {
+                    await flush();
+                    const ref = await submitOrder(delivery, requestKey.current);
+                    void cache.invalidateQueries({ queryKey: ['customer', user.id, 'orders'] });
+                    navigate(`/order-confirmation/${ref}`, { replace: true });
+                    acceptSubmitted();
+                  } catch (e) { setSubmitError(backendError(e)); }
+                  finally { setSubmitting(false); }
+                }}>Submit order request</Button>
               </div>
-              <p id="place-note" className="text-sm text-muted">{t('Place Order is unavailable: online payment is not connected yet.')}</p>
+              <p id="place-note" className="text-sm text-muted">Your saved cart is checked on the server. Repeated submissions with the same request key cannot create duplicate requests.</p>
             </section>
           )}
         </div>

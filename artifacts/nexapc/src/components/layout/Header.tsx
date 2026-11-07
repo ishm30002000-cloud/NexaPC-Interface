@@ -6,6 +6,7 @@ import { Drawer } from '@/components/nx/overlay';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 import { useLocale } from '@/lib/i18n';
+import { useAuth } from '@/store/auth';
 
 const NAV = [
   { to: '/', label: 'Home', end: true },
@@ -72,6 +73,7 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 
 export function Header() {
   const { t } = useLocale();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const burger = useRef<HTMLButtonElement>(null);
@@ -95,8 +97,8 @@ export function Header() {
           <HeaderSearch id="header-search" />
         </div>
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          <NavLink to="/login" className={(s) => cn(linkCls(s), 'hidden gap-2 lg:inline-flex')} data-testid="link-login">
-            <User aria-hidden className="h-5 w-5" /> {t('Login')}
+          <NavLink to={user ? '/account' : '/login'} className={(s) => cn(linkCls(s), 'hidden gap-2 lg:inline-flex')} data-testid="link-login">
+            <User aria-hidden className="h-5 w-5" /> {user ? 'Account' : t('Login')}
           </NavLink>
           <CartButton />
           <button
@@ -119,7 +121,7 @@ export function Header() {
           <HeaderSearch id="drawer-search" onDone={() => setOpen(false)} />
           <nav aria-label={t('Mobile')}>
             <ul className="flex flex-col">
-              {[...NAV, { to: '/login', label: 'Login', end: false }, { to: '/account', label: 'Account', end: false }].map((n) => (
+              {[...NAV, { to: user ? '/account' : '/login', label: user ? 'Account' : 'Login', end: false }].map((n) => (
                 <li key={n.to} className="border-b border-line">
                   <NavLink to={n.to} end={n.end} className={(s) => cn(linkCls(s), 'w-full py-3 text-xl after:hidden')}>
                   {t(n.label)}

@@ -43,7 +43,11 @@ function useScrollTopOnRoute() {
 
 function CartRecoveredNotice() {
   const { t, locale } = useLocale();
-  const { recovered, dismissRecovered, storageFailed } = useCart();
+  const { recovered, dismissRecovered, storageFailed, syncError, retrySync } = useCart();
+  if (syncError) return <div className="container-nexa pt-4"><Notice tone="warn" title="Your cart could not be synced">
+    {syncError} Changes on this page have not been confirmed as saved.{' '}
+    <button onClick={retrySync} className="min-h-[44px] font-semibold text-cyan underline">Retry sync</button>
+  </Notice></div>;
   if (!recovered && !storageFailed) return null;
   return (
     <div className="container-nexa pt-4">
@@ -100,6 +104,7 @@ export function CheckoutLayout() {
         </div>
         <div className="glow-line opacity-60" />
       </header>
+      <CartRecoveredNotice />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         <Suspense fallback={<RouteFallback />}>
           <Outlet />

@@ -1,5 +1,6 @@
 /**
- * NexaPC catalog — the ONLY product data source.
+ * Original NexaPC catalog seed and test fixtures.
+ * Runtime catalog reads now use Supabase through services/products.ts.
  * Rules: real manufacturer models only, facts limited to widely published
  * manufacturer specifications. Prices and stock are NOT PROVIDED yet, so they
  * are `null` and the UI shows "Price pending" / "Availability pending".

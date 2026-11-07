@@ -11,22 +11,30 @@ import { ProductImage } from '@/components/nx/ProductImage';
 import { QuantityStepper } from '@/components/nx/QuantityStepper';
 import { OrderSummary } from '@/components/nx/OrderSummary';
 import { EmptyState, Notice } from '@/components/nx/feedback';
+import { useAuth } from '@/store/auth';
+import { useCatalog } from '@/store/catalog';
+import { ErrorPanel } from '@/components/nx/feedback';
 import { ButtonLink } from '@/components/nx/Button';
 
 export default function Cart() {
   const { locale, t } = useLocale();
-  usePageMeta('Cart', 'Your NexaPC shopping cart, saved on this device.');
-  const { totals, setQuantity, remove, restore } = useCart();
+  usePageMeta('Cart', 'Review your NexaPC shopping cart.');
+  const { totals, setQuantity, remove, restore, ready, syncing, syncError } = useCart();
+  const { user } = useAuth();
+  const { error: catalogError, refresh } = useCatalog();
   const toast = useNxToast();
   const { lines } = totals;
   const crumbs = [{ label: t('Home'), to: '/' }, { label: t('Cart') }];
+
+  if (catalogError) return <div className="container-nexa py-12"><ErrorPanel body="Your cart's products and prices could not be loaded. Your saved cart has not been changed." onRetry={refresh} /></div>;
+  if (!ready) return <><PageHeader crumbs={crumbs} title="Your cart" /><div className="container-nexa py-12" role="status">{syncError ? 'Your saved cart could not be loaded. Use Retry sync above.' : 'Loading your cart…'}</div></>;
 
   if (lines.length === 0) {
     return (
       <>
         <PageHeader crumbs={crumbs} title={t('Your cart')} />
         <div className="container-nexa py-12">
-          <EmptyState icon={<ShoppingCart aria-hidden className="h-8 w-8" />} title={t('Your cart is empty')} body={t('Browse the catalog and add hardware to your cart. It is saved on this device.')} action={<ButtonLink to="/products" size="lg">{t('Shop Now')}</ButtonLink>} />
+          <EmptyState icon={<ShoppingCart aria-hidden className="h-8 w-8" />} title={t('Your cart is empty')} body={user ? 'Browse the catalog and add hardware. Your cart is saved to your account.' : 'Browse the catalog and add hardware. Sign in to save your cart across devices.'} action={<ButtonLink to="/products" size="lg">{t('Shop Now')}</ButtonLink>} />
         </div>
       </>
     );
@@ -41,7 +49,7 @@ export default function Cart() {
 
   return (
     <>
-      <PageHeader crumbs={crumbs} title={t('Your cart')} intro={`${totals.itemCount} ${totals.itemCount === 1 ? t('item') : t('items')} ${t('saved on this device.')}`} />
+      <PageHeader crumbs={crumbs} title={t('Your cart')} intro={`${totals.itemCount} ${totals.itemCount === 1 ? 'item' : 'items'}. ${user ? (syncing ? 'Saving your cart…' : syncError ? 'Changes not synced yet.' : 'Saved to your account.') : 'Saved on this device. Sign in to save across devices.'}`} />
       <div className="container-nexa grid gap-8 pb-32 pt-10 lg:grid-cols-[1fr_380px] lg:pb-16">
         <section aria-labelledby="items-title">
           <h2 id="items-title" className="sr-only">{t('Cart items')}</h2>

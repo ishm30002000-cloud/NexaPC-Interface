@@ -3,6 +3,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { CartProvider } from '@/store/cart';
 import { ToastProvider } from '@/components/nx/toast';
 import { CheckoutLayout, SiteLayout } from '@/components/layout/SiteLayout';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/store/auth';
+import { CatalogProvider } from '@/store/catalog';
 
 const Home = lazy(() => import('@/pages/Home'));
 const Products = lazy(() => import('@/pages/Products'));
@@ -22,10 +25,16 @@ const Orders = lazy(() => import('@/pages/account/Orders'));
 const Settings = lazy(() => import('@/pages/account/Settings'));
 const OrderConfirmation = lazy(() => import('@/pages/OrderConfirmation'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const AuthCallback = lazy(() => import('@/pages/auth/AuthCallback'));
+const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword'));
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true, staleTime: 0 } } });
 
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
+      <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+      <CatalogProvider>
       <ToastProvider>
         <CartProvider>
           <Routes>
@@ -37,6 +46,8 @@ function App() {
               <Route path="login" element={<Login />} />
               <Route path="signup" element={<Signup />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="auth/callback" element={<AuthCallback />} />
+              <Route path="reset-password" element={<ResetPassword />} />
               <Route path="terms" element={<Terms />} />
               <Route path="about" element={<About />} />
               <Route path="account" element={<AccountLayout />}>
@@ -55,6 +66,9 @@ function App() {
           </Routes>
         </CartProvider>
       </ToastProvider>
+      </CatalogProvider>
+      </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

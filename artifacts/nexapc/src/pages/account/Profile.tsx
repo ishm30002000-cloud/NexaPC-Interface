@@ -1,34 +1,49 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { profileSchema, type ProfileValues } from '@/lib/schemas';
+import { useAuth } from '@/store/auth';
+import { getProfile, saveProfile } from '@/services/customer';
+import { backendError } from '@/lib/supabase';
 import { TextField, ErrorSummary, summarize } from '@/components/nx/fields';
 import { Button } from '@/components/nx/Button';
-import { Notice } from '@/components/nx/feedback';
-import { useLocale } from '@/lib/i18n';
+import { Notice, ErrorPanel } from '@/components/nx/feedback';
 
 export default function Profile() {
-  const { t } = useLocale();
+  const { user } = useAuth();
+  const cache = useQueryClient();
+  const key = ['customer', user?.id, 'profile'];
+  const query = useQuery({ queryKey: key, queryFn: getProfile });
   const [attempt, setAttempt] = useState(0);
-  const [saved, setSaved] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: { fullName: 'Demo Customer', email: 'demo@example.com', phone: '' },
-    mode: 'onTouched',
+  const [result, setResult] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting, isDirty } } = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema), defaultValues: { fullName: '', email: user?.email ?? '', phone: '' }, mode: 'onTouched',
   });
-  return (
-    <section aria-labelledby="pf-title" className="panel flex flex-col gap-6 p-6">
-      <h2 id="pf-title">{t('Profile')}</h2>
-      <form noValidate className="flex flex-col gap-5" onSubmit={handleSubmit(async () => { await new Promise((r) => setTimeout(r, 300)); setSaved(true); }, () => { setSaved(false); setAttempt((a) => a + 1); })}>
-        <ErrorSummary errors={summarize(errors as Record<string, { message?: unknown }>, ['fullName', 'email', 'phone'])} focusKey={attempt} />
-        <div className="grid gap-5 md:grid-cols-2">
-          <TextField id="fullName" label={t('Full name')} required autoComplete="name" error={errors.fullName?.message ? t(errors.fullName.message) : undefined} {...register('fullName')} />
-          <TextField id="email" label={t('Email')} type="email" inputMode="email" required autoComplete="email" error={errors.email?.message ? t(errors.email.message) : undefined} {...register('email')} />
-          <TextField id="phone" label={t('Phone (Kuwait)')} type="tel" inputMode="tel" autoComplete="tel" error={errors.phone?.message ? t(errors.phone.message) : undefined} {...register('phone')} />
-        </div>
-        <div role="status" aria-live="polite">{saved && <Notice tone="success" title={t('Changes kept in this demo only')}>{t('The form is valid. Nothing was saved to an account because accounts are not connected yet.')}</Notice>}</div>
-        <Button type="submit" loading={isSubmitting} className="w-fit">{t('Save changes')}</Button>
-      </form>
-    </section>
-  );
+  useEffect(() => {
+    if (query.data && !isDirty) reset({ ...query.data, email: user?.email ?? '' });
+  }, [query.data, user?.email, reset, isDirty]);
+  if (query.isPending) return <p role="status">Loading your profile…</p>;
+  if (query.isError) return <ErrorPanel body="Your profile could not be loaded." onRetry={() => { void query.refetch(); }} />;
+  return <section aria-labelledby="pf-title" className="panel flex flex-col gap-6 p-6">
+    <h2 id="pf-title">Profile</h2>
+    <form noValidate className="flex flex-col gap-5" onSubmit={handleSubmit(async v => {
+      setResult(null);
+      try {
+        await saveProfile(v);
+        cache.setQueryData(key, { fullName: v.fullName, phone: v.phone });
+        reset(v); setOk(true); setResult('Your profile has been saved.');
+      } catch (e) { setOk(false); setResult(backendError(e)); }
+    }, () => setAttempt(a => a + 1))}>
+      <ErrorSummary errors={summarize(errors as Record<string, { message?: unknown }>, ['fullName', 'email', 'phone'])} focusKey={attempt} />
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextField id="fullName" label="Full name" required autoComplete="name" error={errors.fullName?.message} {...register('fullName')} />
+        <TextField id="email" label="Account email" type="email" readOnly hint="Your verified sign-in email. It is not changed by this form." {...register('email')} />
+        <TextField id="phone" label="Phone (Kuwait)" type="tel" autoComplete="tel" error={errors.phone?.message} {...register('phone')} />
+      </div>
+      {result && <div role="status"><Notice tone={ok ? 'success' : 'warn'}>{result}</Notice></div>}
+      <Button type="submit" loading={isSubmitting} className="w-fit">Save changes</Button>
+    </form>
+  </section>;
 }

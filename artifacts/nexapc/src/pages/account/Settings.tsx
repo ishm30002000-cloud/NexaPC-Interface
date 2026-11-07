@@ -13,6 +13,7 @@ export default function Settings() {
   const { t } = useLocale();
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: { currentPassword: '', password: '', confirmPassword: '' },
@@ -22,9 +23,9 @@ export default function Settings() {
     <section aria-labelledby="st-title" className="panel flex flex-col gap-6 p-6">
       <h2 id="st-title">{t('Settings')}</h2>
       <h3>{t('Change password')}</h3>
-      <form noValidate className="flex max-w-lg flex-col gap-5" onSubmit={handleSubmit(async () => { setResult(null); const r = await auth.changePassword(); if (!r.ok) setResult(r.message); }, () => setAttempt((a) => a + 1))}>
+      <form noValidate className="flex max-w-lg flex-col gap-5" onSubmit={handleSubmit(async v => { setResult(null); const r = await auth.changePassword(v); setOk(r.ok); setResult(r.message ?? null); }, () => setAttempt((a) => a + 1))}>
         <ErrorSummary errors={summarize(errors as Record<string, { message?: unknown }>, ['currentPassword', 'password', 'confirmPassword'])} focusKey={attempt} />
-        <div role="status" aria-live="polite">{result && <Notice tone="warn" title={t('Password change is not connected yet')}>{t(result)}</Notice>}</div>
+        <div role="status" aria-live="polite">{result && <Notice tone={ok ? 'success' : 'warn'} title={ok ? 'Password updated' : 'Could not update password'}>{result}</Notice>}</div>
         <PasswordField id="currentPassword" label={t('Current password')} autoComplete="current-password" required error={errors.currentPassword?.message ? t(errors.currentPassword.message) : undefined} {...register('currentPassword')} />
         <PasswordField id="password" label={t('New password')} autoComplete="new-password" required describedExtra="new-pw-rules" error={errors.password?.message ? t(errors.password.message) : undefined} {...register('password')} />
         <PasswordChecklist id="new-pw-rules" value={watch('password')} />

@@ -1,13 +1,13 @@
 ---
 name: NexaPC scope and content integrity
-description: User-defined front-end-only scope and prohibition on invented commercial content.
+description: Supabase backend authorization, English-only scope, and prohibition on invented commercial content.
 ---
 
-NexaPC is a front-end-only UI/UX project. Do not add backend services, databases, API routes, or authentication servers. Use local files for catalog data and localStorage for the cart only; account demonstrations must not persist personal information.
+The user authorized converting NexaPC from a front-end preview into a working backend using their existing Supabase project. Supabase is the chosen database.
 
-**Why:** The user explicitly requested a front-end-only storefront and honest, disconnected account, order, and payment previews.
+**Why:** The user explicitly requested a backend and database in Supabase, then selected the existing project. This supersedes the earlier front-end-only limitation.
 
-**How to apply:** Keep future changes inside this scope unless the user explicitly authorizes a backend. Prices are KWD with three decimals. Never invent product specifications, prices, stock, reviews, promotions, shipping, warranties, policies, company history, or testimonials. Missing commercial data must remain visibly pending; a missing price is not zero. Use real photos for real manufacturer products, never generated product imagery.
+**How to apply:** Use Supabase for persistence rather than introducing a different database. Preserve the English storefront. Prices are KWD with three decimals. Never invent product specifications, prices, stock, reviews, promotions, shipping, warranties, policies, company history, or testimonials. Missing commercial data must remain visibly pending; a missing price is not zero. Use real photos for real manufacturer products, never generated product imagery.
 
 The website should support English only, without an Arabic language switch.
 

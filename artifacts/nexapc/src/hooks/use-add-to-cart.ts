@@ -5,10 +5,14 @@ import { useNxToast } from '@/components/nx/toast';
 import { maxQuantityFor } from '@/lib/cart-totals';
 
 export function useAddToCart() {
-  const { add } = useCart();
+  const { add, ready } = useCart();
   const toast = useNxToast();
   return useCallback(
     (product: Product, qty: number) => {
+      if (!ready) {
+        toast({ tone: 'info', title: 'Your cart is still loading', body: 'Please wait for your saved cart to load, then try again.' });
+        return;
+      }
       const res = add(product.id, qty);
       const max = maxQuantityFor(product);
       if (res.added === 0) {
@@ -27,6 +31,6 @@ export function useAddToCart() {
         link: { to: '/cart', label: 'View Cart' },
       });
     },
-    [add, toast],
+    [add, toast, ready],
   );
 }

@@ -1,1 +1,1 @@
-- [NexaPC scope](nexapc-scope.md) — front-end-only scope; cart-only localStorage; no invented product or commercial claims.
+- [NexaPC scope](nexapc-scope.md) — Supabase backend authorized; English-only storefront; no invented product or commercial claims.

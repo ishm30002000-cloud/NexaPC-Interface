@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MapPin, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { addressSchema, GOVERNORATES, type AddressValues } from '@/lib/schemas';
-import { demoAddresses, type DemoAddress } from '@/services/demo-addresses';
-import { useAsync } from '@/hooks/use-async';
+import { addresses, type SavedAddress } from '@/services/customer';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/store/auth';
+import { backendError } from '@/lib/supabase';
 import { useNxToast } from '@/components/nx/toast';
 import { Dialog } from '@/components/nx/overlay';
 import { TextField, Select, ErrorSummary, summarize } from '@/components/nx/fields';
@@ -43,18 +45,25 @@ function AddressForm({ initial, onSubmit, onCancel }: { initial: AddressValues; 
 export default function Addresses() {
   const { t, locale } = useLocale();
   const toast = useNxToast();
-  const { status, data, retry } = useAsync(demoAddresses.list, 'addresses');
-  const [list, setList] = useState<DemoAddress[] | null>(null);
-  useEffect(() => { if (data) setList(data); }, [data]);
-  const [editing, setEditing] = useState<DemoAddress | 'new' | null>(null);
-  const [deleting, setDeleting] = useState<DemoAddress | null>(null);
+  const { user } = useAuth();
+  const cache = useQueryClient();
+  const key = ['customer', user?.id, 'addresses'];
+  const { status, data: list, refetch } = useQuery({ queryKey: key, queryFn: addresses.list });
+  const setList = (next: SavedAddress[]) => cache.setQueryData(key, next);
+  const retry = () => { void refetch(); };
+  const [editing, setEditing] = useState<SavedAddress | 'new' | null>(null);
+  const [deleting, setDeleting] = useState<SavedAddress | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const save = async (v: AddressValues) => {
-    if (editing === 'new') setList(await demoAddresses.create(v));
-    else if (editing) setList(await demoAddresses.update(editing.id, v));
-    toast({ tone: 'success', title: t(editing === 'new' ? 'Address added to demo' : 'Address updated in demo'), body: t('Held in memory only.') });
-    setEditing(null);
+    setActionError(null);
+    try {
+      if (editing === 'new') setList(await addresses.create(v));
+      else if (editing) setList(await addresses.update(editing.id, v));
+      toast({ tone: 'success', title: editing === 'new' ? 'Address saved' : 'Address updated' });
+      setEditing(null);
+    } catch (e) { setActionError(backendError(e)); }
   };
 
   return (
@@ -63,13 +72,13 @@ export default function Addresses() {
         <h2 id="ad-title">{t('Addresses')}</h2>
         <Button onClick={() => setEditing('new')} icon={<Plus aria-hidden className="h-4 w-4" />} data-testid="button-add-address">{t('Add address')}</Button>
       </div>
-      <Notice tone="info">{t('Demo data. Addresses are stored in memory for this preview and are not saved to an account.')}</Notice>
+      {actionError && !editing && !deleting && <Notice tone="warn">{actionError}</Notice>}
       {status === 'error' ? (
         <ErrorPanel body={t('Addresses could not be loaded.')} onRetry={retry} />
       ) : !list ? (
         <div className="grid gap-4 md:grid-cols-2" role="status"><span className="sr-only">{t('Loading addresses')}</span><div className="skeleton h-44" /><div className="skeleton h-44" /></div>
       ) : list.length === 0 ? (
-        <EmptyState icon={<MapPin aria-hidden className="h-8 w-8" />} title={t('No saved addresses')} body={t('Add a delivery address to use it at checkout once accounts are connected.')} action={<Button onClick={() => setEditing('new')}>{t('Add address')}</Button>} />
+        <EmptyState icon={<MapPin aria-hidden className="h-8 w-8" />} title={t('No saved addresses')} body="Add a delivery address to use at checkout." action={<Button onClick={() => setEditing('new')}>{t('Add address')}</Button>} />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
           {list.map((a) => (
@@ -82,7 +91,11 @@ export default function Addresses() {
               <div className="mt-auto flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={() => setEditing(a)} icon={<Pencil aria-hidden className="h-4 w-4" />} aria-label={`${t('Edit')} ${a.label}`}>{t('Edit')}</Button>
                 {!a.isDefault && (
-                  <Button variant="ghost" loading={busy} onClick={async () => { setBusy(true); setList(await demoAddresses.setDefault(a.id)); setBusy(false); toast({ tone: 'success', title: t('Default address set in demo') }); }} aria-label={`${t('Set')} ${a.label} ${t('as default')}`}>{t('Set default')}</Button>
+                  <Button variant="ghost" loading={busy} onClick={async () => {
+                    setBusy(true); setActionError(null);
+                    try { setList(await addresses.setDefault(a.id)); toast({ tone: 'success', title: 'Default address saved' }); }
+                    catch (e) { setActionError(backendError(e)); } finally { setBusy(false); }
+                  }} aria-label={`${t('Set')} ${a.label} ${t('as default')}`}>{t('Set default')}</Button>
                 )}
                 <Button variant="danger" onClick={() => setDeleting(a)} icon={<Trash2 aria-hidden className="h-4 w-4" />} aria-label={`${t('Delete')} ${a.label}`}>{t('Delete')}</Button>
               </div>
@@ -91,7 +104,8 @@ export default function Addresses() {
         </ul>
       )}
 
-      <Dialog open={editing != null} onOpenChange={(o) => !o && setEditing(null)} title={t(editing === 'new' ? 'Add address' : 'Edit address')} description={t('Demo only. Stored in memory.')}>
+      <Dialog open={editing != null} onOpenChange={(o) => !o && setEditing(null)} title={t(editing === 'new' ? 'Add address' : 'Edit address')} description="Saved securely to your account.">
+        {actionError && <Notice tone="warn">{actionError}</Notice>}
         {editing != null && (
           <AddressForm
             key={editing === 'new' ? 'new' : editing.id}
@@ -106,14 +120,20 @@ export default function Addresses() {
         open={deleting != null}
         onOpenChange={(o) => !o && setDeleting(null)}
         title={t('Delete address?')}
-        description={deleting ? `"${deleting.label}" will be removed from this demo.` : undefined}
+        description={deleting ? `"${deleting.label}" will be removed from your saved addresses.` : undefined}
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeleting(null)}>{t('Cancel')}</Button>
-            <Button variant="danger" loading={busy} onClick={async () => { if (!deleting) return; setBusy(true); setList(await demoAddresses.remove(deleting.id)); setBusy(false); setDeleting(null); toast({ tone: 'info', title: t('Address deleted from demo') }); }} data-testid="button-confirm-delete">{t('Delete')}</Button>
+            <Button variant="danger" loading={busy} onClick={async () => {
+              if (!deleting) return;
+              setBusy(true); setActionError(null);
+              try { setList(await addresses.remove(deleting.id)); setDeleting(null); toast({ tone: 'info', title: 'Address deleted' }); }
+              catch (e) { setActionError(backendError(e)); } finally { setBusy(false); }
+            }} data-testid="button-confirm-delete">{t('Delete')}</Button>
           </>
         }
       >
+        {actionError && <Notice tone="warn">{actionError}</Notice>}
         <p className="text-muted">{t('This cannot be undone.')}</p>
       </Dialog>
     </section>
