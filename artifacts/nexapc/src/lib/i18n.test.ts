@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { products } from '@/data/products';
+import type { Product } from '@/data/products';
 import { formatMoney } from './money';
 import { productCopy, useLocale } from './i18n';
 
 describe('English-only storefront', () => {
   it('preserves the original English catalog without changing product identity', () => {
-    const source = products.find((product) => product.slug === 'samsung-990-pro-2tb')!;
+    const source: Product = {
+      id: 'test-product', slug: 'test-product', name: 'Test product', brand: 'Test',
+      category: 'ssd-storage', priceFils: null, stock: null, images: [],
+      shortDescription: 'Test copy', description: 'English test copy',
+      specs: [{ label: 'Test specification', value: null }], featured: false,
+    };
     expect(productCopy(source, 'en')).toEqual(source);
   });
 
