@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocale } from '@/lib/i18n';
+import { publicImageUrl } from '@/lib/image-assets';
 
 /** Sets the page title and meta description for each route. */
 export function usePageMeta(title: string, description: string) {
@@ -17,5 +18,5 @@ export function usePageMeta(title: string, description: string) {
 }
 
 export function assetUrl(path: string) {
-  return `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+  return publicImageUrl(import.meta.env.VITE_SUPABASE_URL, path);
 }

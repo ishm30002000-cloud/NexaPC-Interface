@@ -53,6 +53,31 @@ Manage real catalog prices, stock, product copy and order statuses in the
 Supabase Table Editor until a separate store-management interface is built.
 Prices are integer fils: 12.750 KWD = 12750 fils.
 
+## Website pictures
+
+The **`nexapc-images`** Supabase Storage bucket contains all 10 existing image
+assets: eight product photos, the hero background, and the favicon. Downloads
+are public; anonymous and customer uploads/edits are not enabled. Its file
+limit is 5 MiB and accepted types are JPEG, PNG, WebP, SVG and GIF.
+
+Product image URLs live in `products.details.images`; the hero and favicon use
+the same bucket. Missing product photos remain explicitly pending. The original
+local files are retained as migration inputs, not runtime fallbacks.
+
+The server-only migration requires `SUPABASE_STORAGE_SERVICE_ROLE_KEY` in
+Secrets. Use a full project `service_role` key or server secret key, never the
+public `anon`/publishable key, a database connection string, or a signing secret.
+It validates permissions, refuses to overwrite differing objects, and verifies
+SHA-256 hashes through public downloads before writing its manifest.
+
+```sh
+pnpm --filter @workspace/scripts run migrate:nexapc-images
+```
+
+Migration `202611070004_product_storage_images.sql` switches the original
+product photo paths only after uploads are verified. It preserves the rest of
+each product record and is safe to reapply.
+
 ## Backend operations
 
 - `save_cart(p_lines, p_merge)`: validates product IDs and integer quantities,
