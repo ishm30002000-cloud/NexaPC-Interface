@@ -26,6 +26,10 @@ if (serverKey !== serverKey.trim() || serverKey.startsWith('"') || serverKey.sta
 if (!serverKey.startsWith('sb_secret_') && !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(serverKey)) {
   throw new Error('This is not a Supabase project server API key. Use the complete project service_role key, not a personal access token, JWT signing secret, label or masked value.');
 }
+if (!serverKey.startsWith('sb_secret_')) {
+  const claims = JSON.parse(Buffer.from(serverKey.split('.')[1], 'base64url').toString('utf8')) as { role?: string };
+  if (claims.role !== 'service_role') throw new Error('The saved key is not the service_role key. The public anon key can read the catalog but cannot create a Storage bucket. Copy the separate service_role row from Legacy API Keys.');
+}
 if (process.argv.includes('--validate-config')) {
   process.stdout.write('Server key format is valid. The credential value has not been displayed.\n');
   process.exit(0);
@@ -73,7 +77,10 @@ async function migrate() {
         allowed_mime_types: Object.values(mimeTypes),
       }),
     });
-    if (!created.ok) throw new Error(`Bucket creation failed (${created.status}).`);
+    if (!created.ok) {
+      const error = await readError(created);
+      throw new Error(`Bucket creation failed (${created.status}): ${error.message ?? error.error ?? 'No error detail'}.`);
+    }
   } else {
     const config = await existingBucket.json() as { public: boolean };
     if (!config.public) throw new Error('The existing bucket is private. Refusing to change access on an existing bucket.');
