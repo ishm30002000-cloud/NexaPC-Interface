@@ -13,13 +13,13 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const publicDir = path.join(root, 'artifacts/nexapc/public');
 const origin = process.env.VITE_SUPABASE_URL;
-const serverKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serverKey = process.env.SUPABASE_STORAGE_SERVICE_ROLE_KEY;
 const bucket = 'nexapc-images';
 const mimeTypes: Record<string, string> = {
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
   '.webp': 'image/webp', '.svg': 'image/svg+xml', '.gif': 'image/gif',
 };
-if (!origin || !serverKey) throw new Error('Set VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running this server-only migration.');
+if (!origin || !serverKey) throw new Error('Set VITE_SUPABASE_URL and SUPABASE_STORAGE_SERVICE_ROLE_KEY before running this server-only migration.');
 if (serverKey !== serverKey.trim() || serverKey.startsWith('"') || serverKey.startsWith("'")) {
   throw new Error('The server key contains extra whitespace or quotes. Enter only the complete API key in Secrets.');
 }
