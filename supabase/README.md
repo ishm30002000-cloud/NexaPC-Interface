@@ -33,6 +33,11 @@ are project-owner settings, not frontend code:
 4. Test a real confirmation email and reset email with an address you control.
    Do not turn off verification just to work around delivery restrictions.
 
+The responsive navbar shows the saved profile name, falling back to the account
+email, and updates when profile changes are saved. Logout is available on desktop,
+tablet and mobile; it waits for pending cart writes before ending the session.
+Orders and all other customer queries remain owner-scoped by Supabase RLS.
+
 Official references:
 - [Redirect URL configuration](https://supabase.com/docs/guides/auth/redirect-urls)
 - [Custom SMTP and default-mail restrictions](https://supabase.com/docs/guides/auth/auth-smtp)

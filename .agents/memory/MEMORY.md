@@ -1,2 +1,3 @@
 - [NexaPC scope](nexapc-scope.md) — Supabase backend authorized; English-only storefront; no invented product or commercial claims.
 - [Safe asset migration](supabase-assets.md) — use Supabase Storage; verify uploaded pictures before switching references; keep server keys out of the frontend.
+- [Auth verification](auth-verification.md) — working login/RLS does not prove signup email delivery; verify generated redirects without exposing tokens.
